@@ -1,0 +1,150 @@
+# ============================================
+# Python
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+*.pyc
+
+# ============================================
+# Virtual Environment (依赖文件)
+# ============================================
+venv/
+ENV/
+env/
+
+# ============================================
+# Django
+# ============================================
+*.log
+logs/
+staticfiles/
+
+# 注意：保留 db.sqlite3 和 media/ 用于开发
+# db.sqlite3
+# media/
+
+# ============================================
+# Node.js / Frontend (依赖文件)
+# ============================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Frontend build outputs
+dist/
+.cache/
+.parcel-cache/
+.next/
+out/
+.nuxt/
+.vuepress/dist/
+frontend-html-backup/
+
+# ============================================
+# IDE / Editor
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.cursor/
+*.sublime-project
+*.sublime-workspace
+
+# ============================================
+# OS
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ============================================
+# Documentation / README (无关的MD文件)
+# ============================================
+# README/
+# 文档材料/
+
+# 保留根目录的 README.md
+!README.md
+
+# 保留前端子项目的 README.md
+!frontend/README.md
+!frontend-vue/README.md
+
+# ============================================
+# Environment / Secrets
+# ============================================
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+*.pem
+*.key
+secrets.json
+
+# ============================================
+# Kiro / AI Tools
+# ============================================
+# .kiro/
+# .shared/
+
+# ============================================
+# Temporary / Cache
+# ============================================
+*.tmp
+*.temp
+*.bak
+*.swp
+*.swo
+*~.nib
+.cache/
+tmp/
+temp/
+
+# ============================================
+# Database backups
+# ============================================
+*.sql.backup
+*.db.backup
+*.sqlite3.backup
+
+# ============================================
+# Compiled files
+# ============================================
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
