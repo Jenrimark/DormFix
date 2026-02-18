@@ -21,12 +21,54 @@ class User(AbstractUser):
         help_text='1:学生, 2:维修人员, 3:管理员'
     )
     
+    # 基本信息
     phone = models.CharField(
         verbose_name='手机号',
         max_length=11,
         blank=True,
         null=True,
         help_text='11位手机号码'
+    )
+    
+    avatar = models.ImageField(
+        verbose_name='头像',
+        upload_to='avatars/%Y/%m/',
+        blank=True,
+        null=True,
+        help_text='用户头像图片'
+    )
+    
+    # 学生专属字段（创建后不可修改）
+    student_id = models.CharField(
+        verbose_name='学号',
+        max_length=20,
+        blank=True,
+        null=True,
+        help_text='学生学号'
+    )
+    
+    school = models.CharField(
+        verbose_name='学校',
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text='所属学校'
+    )
+    
+    campus = models.CharField(
+        verbose_name='校区',
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text='所属校区'
+    )
+    
+    class_number = models.CharField(
+        verbose_name='班号',
+        max_length=50,
+        blank=True,
+        null=True,
+        help_text='班级编号'
     )
     
     dorm_code = models.CharField(
@@ -37,12 +79,20 @@ class User(AbstractUser):
         help_text='例如：北一-305'
     )
     
-    avatar = models.ImageField(
-        verbose_name='头像',
-        upload_to='avatars/%Y/%m/',
+    # 可编辑字段
+    real_name = models.CharField(
+        verbose_name='真实姓名',
+        max_length=50,
         blank=True,
         null=True,
-        help_text='用户头像图片'
+        help_text='用户真实姓名'
+    )
+    
+    bio = models.TextField(
+        verbose_name='个人简介',
+        blank=True,
+        null=True,
+        help_text='个人简介'
     )
     
     created_at = models.DateTimeField(

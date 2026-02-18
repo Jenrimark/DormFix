@@ -178,6 +178,17 @@ CSRF_TRUSTED_ORIGINS = [
     'http://127.0.0.1:5173',
 ]
 
+# Session Cookie 配置（开发环境跨域）
+SESSION_COOKIE_SAMESITE = 'Lax'  # 允许跨域携带 cookie
+SESSION_COOKIE_SECURE = False  # 开发环境使用 HTTP
+SESSION_COOKIE_HTTPONLY = True  # 防止 XSS 攻击
+SESSION_COOKIE_AGE = 86400  # 24小时
+
+# CSRF Cookie 配置
+CSRF_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_HTTPONLY = False  # 前端需要读取 CSRF token
+
 # REST Framework 配置
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [

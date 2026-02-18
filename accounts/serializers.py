@@ -7,12 +7,42 @@ class UserSerializer(serializers.ModelSerializer):
     """用户序列化器"""
     
     role_display = serializers.CharField(source='get_role_display', read_only=True)
+    avatar_url = serializers.SerializerMethodField()
     
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'role', 'role_display', 
-                  'phone', 'dorm_code', 'avatar', 'created_at']
+                  'phone', 'dorm_code', 'avatar', 'avatar_url', 'student_id', 'school', 
+                  'campus', 'class_number', 'real_name', 'bio', 'created_at']
         read_only_fields = ['id', 'created_at']
+    
+    def get_avatar_url(self, obj):
+        """返回头像的完整 URL 或 base64"""
+        if obj.avatar:
+            try:
+                # 如果头像存储在数据库中，返回访问 URL
+                request = self.context.get('request')
+                if request:
+                    return request.build_absolute_uri(obj.avatar.url)
+                return obj.avatar.url
+            except:
+                return None
+        return None
+
+
+class UserProfileUpdateSerializer(serializers.ModelSerializer):
+    """用户个人信息更新序列化器（除了角色，其他都可以编辑）"""
+    
+    class Meta:
+        model = User
+        fields = ['email', 'phone', 'real_name', 'bio', 'avatar', 
+                  'student_id', 'school', 'campus', 'class_number', 'dorm_code']
+    
+    def validate_phone(self, value):
+        """验证手机号格式"""
+        if value and len(value) != 11:
+            raise serializers.ValidationError("手机号必须是11位")
+        return value
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):
@@ -24,7 +54,8 @@ class UserRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['username', 'email', 'password', 'password_confirm', 
-                  'role', 'phone', 'dorm_code']
+                  'role', 'phone', 'dorm_code', 'student_id', 'school', 
+                  'campus', 'class_number', 'real_name']
     
     def validate(self, attrs):
         """验证密码一致性"""

@@ -6,7 +6,8 @@ from django.contrib.auth import login, logout
 from .models import User
 from .serializers import (
     UserSerializer, UserRegisterSerializer, 
-    UserLoginSerializer, ChangePasswordSerializer
+    UserLoginSerializer, ChangePasswordSerializer,
+    UserProfileUpdateSerializer
 )
 
 
@@ -57,7 +58,7 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def me(self, request):
         """获取当前用户信息"""
-        serializer = UserSerializer(request.user)
+        serializer = UserSerializer(request.user, context={'request': request})
         return Response(serializer.data)
     
     @action(detail=False, methods=['put'])
@@ -83,13 +84,52 @@ class UserViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['put'])
     def update_profile(self, request):
-        """更新个人信息"""
+        """更新个人信息（只能更新部分字段）"""
         user = request.user
-        serializer = UserSerializer(user, data=request.data, partial=True)
+        serializer = UserProfileUpdateSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
+            # 返回完整的用户信息，包含 avatar_url
+            user_serializer = UserSerializer(user, context={'request': request})
             return Response({
                 'message': '信息更新成功',
-                'user': serializer.data
+                'user': user_serializer.data
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=False, methods=['post'])
+    def upload_avatar(self, request):
+        """上传头像"""
+        user = request.user
+        avatar = request.FILES.get('avatar')
+        
+        if not avatar:
+            return Response(
+                {'error': '请选择头像文件'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 验证文件类型
+        if not avatar.content_type.startswith('image/'):
+            return Response(
+                {'error': '只能上传图片文件'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 验证文件大小（5MB）
+        if avatar.size > 5 * 1024 * 1024:
+            return Response(
+                {'error': '图片大小不能超过 5MB'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        user.avatar = avatar
+        user.save()
+        
+        # 使用 UserSerializer 并传入 request context
+        serializer = UserSerializer(user, context={'request': request})
+        
+        return Response({
+            'message': '头像上传成功',
+            'user': serializer.data
+        })

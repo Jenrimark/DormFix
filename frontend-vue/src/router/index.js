@@ -9,6 +9,7 @@ const routes = [
   { path: '/admin', name: 'AdminDashboard', component: () => import('@/views/AdminDashboardView.vue') },
   { path: '/profile', name: 'Profile', component: () => import('@/views/ProfileView.vue') },
   { path: '/settings', name: 'Settings', component: () => import('@/views/SettingsView.vue') },
+  { path: '/debug', name: 'Debug', component: () => import('@/views/DebugView.vue') },
 ]
 
 const router = createRouter({

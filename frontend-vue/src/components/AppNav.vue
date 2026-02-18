@@ -9,16 +9,15 @@
           <span class="font-heading text-xl font-semibold text-textDark">DormFix</span>
         </router-link>
         <div class="flex items-center gap-4">
-          <!-- Anchor links for homepage sections -->
-          <a href="#features" class="text-gray-600 hover:text-primary transition-colors duration-200">功能</a>
-          <a href="#demo" class="text-gray-600 hover:text-primary transition-colors duration-200">演示</a>
+          <!-- Homepage link -->
+          <router-link to="/" class="text-gray-600 hover:text-primary transition-colors duration-200">首页</router-link>
           
           <template v-if="userStore.isLoggedIn">
             <router-link to="/submit" class="text-gray-600 hover:text-primary transition-colors">提交报修</router-link>
             <router-link to="/orders" class="text-gray-600 hover:text-primary transition-colors">我的工单</router-link>
             <router-link v-if="userStore.isAdmin" to="/admin" class="text-gray-600 hover:text-primary transition-colors">管理后台</router-link>
             <router-link to="/profile" class="text-gray-600 hover:text-primary transition-colors">个人中心</router-link>
-            <button type="button" @click="handleLogout" class="text-gray-600 hover:text-primary transition-colors">退出</button>
+            <button type="button" @click="handleLogout" class="text-gray-600 hover:text-primary transition-colors cursor-pointer">退出</button>
           </template>
           <template v-else>
             <router-link to="/login" class="text-gray-600 hover:text-primary transition-colors">登录</router-link>

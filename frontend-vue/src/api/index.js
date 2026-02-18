@@ -15,6 +15,11 @@ export const login = (data) => api.post('/accounts/users/login/', data)
 export const logout = () => api.post('/accounts/users/logout/')
 export const register = (data) => api.post('/accounts/users/register/', data)
 export const getMe = () => api.get('/accounts/users/me/')
+export const updateProfile = (data) => api.put('/accounts/users/update_profile/', data)
+export const uploadAvatar = (formData) => api.post('/accounts/users/upload_avatar/', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+})
+export const changePassword = (data) => api.put('/accounts/users/change_password/', data)
 
 // 故障类型
 export const getRepairTypes = () => api.get('/repairs/repair-types/')

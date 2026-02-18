@@ -24,6 +24,7 @@ class Command(BaseCommand):
                 'email': 'admin@dormfix.com',
                 'role': 3,
                 'phone': '13800000000',
+                'real_name': '系统管理员',
                 'is_staff': True,
                 'is_superuser': True,
             }
@@ -42,6 +43,7 @@ class Command(BaseCommand):
                     'email': f'repairman{i}@dormfix.com',
                     'role': 2,
                     'phone': f'1380000000{i}',
+                    'real_name': f'维修员{i}',
                 }
             )
             if created:
@@ -53,6 +55,8 @@ class Command(BaseCommand):
         # 创建学生
         students = []
         dorms = ['北一-305', '南二-208', '东三-412', '西四-501', '北二-106']
+        schools = ['清华大学', '北京大学', '复旦大学', '上海交通大学', '浙江大学']
+        campuses = ['本部', '东校区', '西校区', '南校区', '北校区']
         for i in range(1, 6):
             student, created = User.objects.get_or_create(
                 username=f'student{i}',
@@ -61,6 +65,11 @@ class Command(BaseCommand):
                     'role': 1,
                     'phone': f'1390000000{i}',
                     'dorm_code': dorms[i-1],
+                    'student_id': f'2024{10000 + i}',
+                    'school': schools[i-1],
+                    'campus': campuses[i-1],
+                    'class_number': f'计算机{i}班',
+                    'real_name': f'学生{i}',
                 }
             )
             if created:
@@ -72,11 +81,50 @@ class Command(BaseCommand):
         # 2. 创建故障类型
         self.stdout.write('\n创建故障类型...')
         repair_types_data = [
-            {'name': '水电类', 'priority': 'high', 'description': '漏水、断电、照明等问题'},
-            {'name': '家具类', 'priority': 'medium', 'description': '床、桌椅、柜子等家具问题'},
-            {'name': '门窗类', 'priority': 'medium', 'description': '门锁、窗户、玻璃等问题'},
-            {'name': '网络类', 'priority': 'high', 'description': '网络故障、网口损坏等'},
-            {'name': '其他', 'priority': 'low', 'description': '其他类型的报修'},
+            # 水电类
+            {'name': '水电类 - 漏水', 'priority': 'high', 'description': '水龙头、水管、马桶漏水等'},
+            {'name': '水电类 - 断电', 'priority': 'high', 'description': '宿舍断电、跳闸、电路故障'},
+            {'name': '水电类 - 照明', 'priority': 'medium', 'description': '灯管损坏、开关失灵、灯不亮'},
+            {'name': '水电类 - 插座', 'priority': 'high', 'description': '插座损坏、松动、无电'},
+            {'name': '水电类 - 热水器', 'priority': 'medium', 'description': '热水器不工作、漏水、温度异常'},
+            
+            # 家具类
+            {'name': '家具类 - 床铺', 'priority': 'medium', 'description': '床板松动、床架损坏、床垫问题'},
+            {'name': '家具类 - 桌椅', 'priority': 'low', 'description': '书桌、椅子损坏、抽屉故障'},
+            {'name': '家具类 - 衣柜', 'priority': 'low', 'description': '柜门脱落、锁具损坏、隔板问题'},
+            {'name': '家具类 - 空调', 'priority': 'medium', 'description': '空调不制冷/制热、漏水、噪音大'},
+            
+            # 门窗类
+            {'name': '门窗类 - 门锁', 'priority': 'high', 'description': '门锁损坏、钥匙丢失、无法开关'},
+            {'name': '门窗类 - 门框', 'priority': 'medium', 'description': '门框变形、门关不严、门轴损坏'},
+            {'name': '门窗类 - 窗户', 'priority': 'medium', 'description': '窗户关不严、窗框松动'},
+            {'name': '门窗类 - 玻璃', 'priority': 'high', 'description': '玻璃破损、裂缝'},
+            
+            # 卫生间
+            {'name': '卫生间 - 马桶', 'priority': 'high', 'description': '马桶堵塞、冲水故障、漏水'},
+            {'name': '卫生间 - 下水道', 'priority': 'high', 'description': '下水道堵塞、反味、排水不畅'},
+            {'name': '卫生间 - 淋浴', 'priority': 'medium', 'description': '花洒损坏、水温异常、水压不足'},
+            {'name': '卫生间 - 洗手池', 'priority': 'medium', 'description': '洗手池堵塞、水龙头损坏'},
+            
+            # 网络通讯
+            {'name': '网络类 - 网络故障', 'priority': 'high', 'description': '无法上网、网速慢、频繁断网'},
+            {'name': '网络类 - 网口损坏', 'priority': 'medium', 'description': '网口松动、接触不良、指示灯不亮'},
+            {'name': '网络类 - 路由器', 'priority': 'medium', 'description': 'WiFi信号弱、路由器故障'},
+            
+            # 墙面地面
+            {'name': '墙面地面 - 墙面', 'priority': 'low', 'description': '墙面脱落、开裂、渗水'},
+            {'name': '墙面地面 - 地板', 'priority': 'medium', 'description': '地板损坏、翘起、积水'},
+            {'name': '墙面地面 - 天花板', 'priority': 'medium', 'description': '天花板漏水、脱落'},
+            
+            # 消防安全
+            {'name': '消防安全 - 烟雾报警器', 'priority': 'high', 'description': '报警器故障、误报、不响应'},
+            {'name': '消防安全 - 灭火器', 'priority': 'high', 'description': '灭火器过期、损坏、缺失'},
+            
+            # 其他设施
+            {'name': '其他 - 窗帘', 'priority': 'low', 'description': '窗帘损坏、轨道故障'},
+            {'name': '其他 - 晾衣架', 'priority': 'low', 'description': '晾衣架损坏、绳子断裂'},
+            {'name': '其他 - 垃圾桶', 'priority': 'low', 'description': '垃圾桶损坏、缺失'},
+            {'name': '其他 - 其他问题', 'priority': 'low', 'description': '其他未分类的报修问题'},
         ]
         
         repair_types = []

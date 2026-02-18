@@ -9,6 +9,8 @@
             <option value="">请选择故障类型</option>
             <option v-for="t in repairTypes" :key="t.id" :value="t.id">{{ t.name }}</option>
           </select>
+          <p v-if="repairTypes.length === 0" class="text-xs text-red-500 mt-1">加载中或暂无数据...</p>
+          <p v-else class="text-xs text-gray-500 mt-1">共 {{ repairTypes.length }} 个选项</p>
         </div>
         
         <div>
@@ -98,11 +100,25 @@ onMounted(async () => {
     router.push({ name: 'Login', query: { redirect: '/submit' } })
     return
   }
+  
+  console.log('开始加载故障类型...')
   try {
     const { data } = await getRepairTypes()
-    repairTypes.value = data
-  } catch {
-    if (typeof window.__toast === 'function') window.__toast('获取故障类型失败', 'error')
+    console.log('故障类型数据:', data)
+    // 处理分页数据：如果返回的是分页对象，取 results；否则直接使用
+    repairTypes.value = data.results || data
+    
+    if (!repairTypes.value || repairTypes.value.length === 0) {
+      if (typeof window.__toast === 'function') {
+        window.__toast('暂无故障类型数据，请联系管理员', 'warning')
+      }
+    }
+  } catch (error) {
+    console.error('获取故障类型失败:', error)
+    const errorMsg = error.response?.data?.detail || error.message || '获取故障类型失败'
+    if (typeof window.__toast === 'function') {
+      window.__toast(errorMsg, 'error')
+    }
   }
 })
 
