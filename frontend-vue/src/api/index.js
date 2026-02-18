@@ -23,7 +23,13 @@ export const getRepairTypes = () => api.get('/repairs/repair-types/')
 export const getWorkOrders = (params) => api.get('/repairs/work-orders/', { params })
 export const getMyOrders = (params) => api.get('/repairs/work-orders/my_orders/', { params })
 export const getPendingOrders = () => api.get('/repairs/work-orders/pending/')
-export const createWorkOrder = (data) => api.post('/repairs/work-orders/', data)
+export const createWorkOrder = (data) => {
+  // 如果是 FormData，自动设置正确的 Content-Type
+  const config = data instanceof FormData ? {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  } : {}
+  return api.post('/repairs/work-orders/', data, config)
+}
 export const assignOrder = (id, repairmanId) => api.post(`/repairs/work-orders/${id}/assign/`, { repairman_id: repairmanId })
 export const updateOrderStatus = (id, status, remark) => api.post(`/repairs/work-orders/${id}/update_status/`, { status, remark })
 export const getStatistics = () => api.get('/repairs/work-orders/statistics/')
