@@ -32,7 +32,7 @@ class UserViewSet(viewsets.ModelViewSet):
             user = serializer.save()
             return Response({
                 'message': '注册成功',
-                'user': UserSerializer(user).data
+                'user': UserSerializer(user, context={'request': request}).data
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -45,7 +45,7 @@ class UserViewSet(viewsets.ModelViewSet):
             login(request, user)
             return Response({
                 'message': '登录成功',
-                'user': UserSerializer(user).data
+                'user': UserSerializer(user, context={'request': request}).data
             })
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     

@@ -36,4 +36,10 @@ export const useUserStore = defineStore('user', () => {
   }
 
   return { user, isLoggedIn, isAdmin, isRepairman, fetchUser, login, logout, setUser }
+}, {
+  persist: {
+    key: 'dormfix-user',
+    storage: localStorage,
+    paths: ['user']
+  }
 })
