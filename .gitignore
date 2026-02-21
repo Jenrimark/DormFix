@@ -63,6 +63,7 @@ out/
 .nuxt/
 .vuepress/dist/
 frontend-html-backup/
+.hypothesis/
 
 # ============================================
 # IDE / Editor
