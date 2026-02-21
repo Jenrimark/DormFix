@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import User
+from .models import User, OperationLog
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -13,7 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'username', 'email', 'role', 'role_display', 
                   'phone', 'dorm_code', 'avatar', 'avatar_url', 'student_id', 'school', 
-                  'campus', 'class_number', 'real_name', 'bio', 'created_at']
+                  'campus', 'class_number', 'real_name', 'bio', 'is_active', 'created_at']
         read_only_fields = ['id', 'created_at']
     
     def get_avatar_url(self, obj):
@@ -109,3 +109,21 @@ class ChangePasswordSerializer(serializers.Serializer):
         if attrs['new_password'] != attrs['new_password_confirm']:
             raise serializers.ValidationError("两次新密码不一致")
         return attrs
+
+
+class OperationLogSerializer(serializers.ModelSerializer):
+    """操作日志序列化器"""
+    
+    operator_username = serializers.CharField(source='operator.username', read_only=True)
+    operator_real_name = serializers.CharField(source='operator.real_name', read_only=True)
+    target_user_username = serializers.CharField(source='target_user.username', read_only=True)
+    target_user_real_name = serializers.CharField(source='target_user.real_name', read_only=True)
+    action_display = serializers.CharField(source='get_action_display', read_only=True)
+    
+    class Meta:
+        model = OperationLog
+        fields = ['id', 'operator', 'operator_username', 'operator_real_name',
+                  'action', 'action_display', 'target_user', 'target_user_username',
+                  'target_user_real_name', 'target_order', 'description',
+                  'ip_address', 'created_at']
+        read_only_fields = ['id', 'created_at']

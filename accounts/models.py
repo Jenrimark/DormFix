@@ -95,6 +95,12 @@ class User(AbstractUser):
         help_text='个人简介'
     )
     
+    is_active = models.BooleanField(
+        verbose_name='账号状态',
+        default=True,
+        help_text='False表示账号已禁用'
+    )
+    
     created_at = models.DateTimeField(
         verbose_name='创建时间',
         auto_now_add=True
@@ -125,3 +131,89 @@ class User(AbstractUser):
     def is_admin(self):
         """判断是否为管理员"""
         return self.role == 3
+    
+    def can_login(self):
+        """检查用户是否可以登录"""
+        return self.is_active and self.is_authenticated
+
+
+class OperationLog(models.Model):
+    """
+    操作日志表
+    记录系统中的重要操作，用于审计和追溯
+    """
+    
+    ACTION_CHOICES = (
+        ('create_user', '创建用户'),
+        ('update_user', '更新用户'),
+        ('delete_user', '删除用户'),
+        ('reset_password', '重置密码'),
+        ('toggle_status', '切换状态'),
+        ('assign_order', '派单'),
+        ('update_order_status', '更新工单状态'),
+        ('batch_enable', '批量启用'),
+        ('batch_disable', '批量禁用'),
+        ('batch_delete', '批量删除'),
+    )
+    
+    operator = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name='operations',
+        verbose_name='操作人'
+    )
+    
+    action = models.CharField(
+        verbose_name='操作类型',
+        max_length=50,
+        choices=ACTION_CHOICES
+    )
+    
+    target_user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='target_logs',
+        verbose_name='目标用户'
+    )
+    
+    target_order = models.ForeignKey(
+        'repairs.WorkOrder',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name='目标工单'
+    )
+    
+    description = models.TextField(
+        verbose_name='操作描述',
+        blank=True,
+        help_text='详细描述操作内容'
+    )
+    
+    ip_address = models.GenericIPAddressField(
+        verbose_name='IP地址',
+        null=True,
+        blank=True
+    )
+    
+    created_at = models.DateTimeField(
+        verbose_name='操作时间',
+        auto_now_add=True
+    )
+    
+    class Meta:
+        db_table = 'operation_logs'
+        verbose_name = '操作日志'
+        verbose_name_plural = verbose_name
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['operator']),
+            models.Index(fields=['action']),
+            models.Index(fields=['created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.operator} - {self.get_action_display()} - {self.created_at}"

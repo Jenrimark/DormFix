@@ -13,9 +13,26 @@
           <router-link to="/" class="text-gray-600 hover:text-primary transition-colors duration-200">首页</router-link>
           
           <template v-if="userStore.isLoggedIn">
-            <router-link to="/submit" class="text-gray-600 hover:text-primary transition-colors">提交报修</router-link>
-            <router-link to="/orders" class="text-gray-600 hover:text-primary transition-colors">我的工单</router-link>
-            <router-link v-if="userStore.isAdmin" to="/admin" class="text-gray-600 hover:text-primary transition-colors">管理后台</router-link>
+            <!-- 学生：显示"提交报修"、"我的工单" -->
+            <template v-if="userStore.user?.role === 1">
+              <router-link to="/submit" class="text-gray-600 hover:text-primary transition-colors">提交报修</router-link>
+              <router-link to="/orders" class="text-gray-600 hover:text-primary transition-colors">我的工单</router-link>
+            </template>
+            
+            <!-- 维修人员：显示"待接单"、"我的工单"，隐藏"提交报修" -->
+            <template v-if="userStore.user?.role === 2">
+              <router-link to="/orders" class="text-gray-600 hover:text-primary transition-colors">待接单</router-link>
+              <router-link to="/orders" class="text-gray-600 hover:text-primary transition-colors">我的工单</router-link>
+            </template>
+            
+            <!-- 管理员：显示"管理仪表盘"、"用户管理"、"工单管理"、"操作日志"，隐藏"提交报修" -->
+            <template v-if="userStore.user?.role === 3">
+              <router-link to="/admin" class="text-gray-600 hover:text-primary transition-colors">管理仪表盘</router-link>
+              <router-link to="/admin/users" class="text-gray-600 hover:text-primary transition-colors">用户管理</router-link>
+              <router-link to="/orders" class="text-gray-600 hover:text-primary transition-colors">工单管理</router-link>
+              <router-link to="/admin/logs" class="text-gray-600 hover:text-primary transition-colors">操作日志</router-link>
+            </template>
+            
             <router-link to="/profile" class="text-gray-600 hover:text-primary transition-colors">个人中心</router-link>
             <button type="button" @click="handleLogout" class="text-gray-600 hover:text-primary transition-colors cursor-pointer">退出</button>
           </template>

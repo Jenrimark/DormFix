@@ -66,6 +66,84 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
         # 管理员可以看到所有工单
         return queryset
     
+    def retrieve(self, request, *args, **kwargs):
+        """获取单个工单详情 - 增强权限检查"""
+        instance = self.get_object()
+        user = request.user
+        
+        # 学生只能访问自己的工单
+        if user.is_student() and instance.user != user:
+            return Response(
+                {'error': '无权访问此工单', 'code': 'ORDER_ACCESS_DENIED'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # 维修人员只能访问分配给自己的工单
+        if user.is_repairman() and instance.repairman != user:
+            return Response(
+                {'error': '无权访问此工单', 'code': 'ORDER_ACCESS_DENIED'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+    
+    def update(self, request, *args, **kwargs):
+        """更新工单 - 增强权限检查"""
+        instance = self.get_object()
+        user = request.user
+        
+        # 学生只能更新自己的工单
+        if user.is_student() and instance.user != user:
+            return Response(
+                {'error': '无权修改此工单', 'code': 'ORDER_ACCESS_DENIED'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # 维修人员只能更新分配给自己的工单
+        if user.is_repairman() and instance.repairman != user:
+            return Response(
+                {'error': '无权修改此工单', 'code': 'ORDER_ACCESS_DENIED'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        return super().update(request, *args, **kwargs)
+    
+    def partial_update(self, request, *args, **kwargs):
+        """部分更新工单 - 增强权限检查"""
+        instance = self.get_object()
+        user = request.user
+        
+        # 学生只能更新自己的工单
+        if user.is_student() and instance.user != user:
+            return Response(
+                {'error': '无权修改此工单', 'code': 'ORDER_ACCESS_DENIED'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # 维修人员只能更新分配给自己的工单
+        if user.is_repairman() and instance.repairman != user:
+            return Response(
+                {'error': '无权修改此工单', 'code': 'ORDER_ACCESS_DENIED'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        return super().partial_update(request, *args, **kwargs)
+    
+    def destroy(self, request, *args, **kwargs):
+        """删除工单 - 增强权限检查"""
+        instance = self.get_object()
+        user = request.user
+        
+        # 只有管理员可以删除工单
+        if not user.is_admin():
+            return Response(
+                {'error': '权限不足', 'code': 'PERMISSION_DENIED'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        return super().destroy(request, *args, **kwargs)
+    
     def perform_create(self, serializer):
         """创建工单时自动设置当前用户"""
         serializer.save()
