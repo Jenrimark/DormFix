@@ -94,7 +94,9 @@
 <script setup>
 import { ref } from 'vue'
 import { reviewOrder } from '@/api'
+import { useNotification } from '@/composables/useNotification'
 
+const { notify } = useNotification()
 const props = defineProps({
   order: {
     type: Object,
@@ -122,7 +124,10 @@ const handleSubmit = async (actionType) => {
   
   // 验证拒绝时必须填写原因
   if (actionType === 'reject' && !remark.value.trim()) {
-    alert('审核拒绝必须填写原因')
+    notify({
+      message: '审核拒绝必须填写原因',
+      type: 'warning'
+    })
     return
   }
   
@@ -135,12 +140,18 @@ const handleSubmit = async (actionType) => {
     })
     
     const message = actionType === 'pass' ? '审核通过' : '审核拒绝'
-    alert(message)
+    notify({
+      message,
+      type: 'success'
+    })
     emit('submit')
     emit('close')
   } catch (error) {
     console.error('审核失败:', error)
-    alert(error.response?.data?.error || '审核失败，请重试')
+    notify({
+      message: error.response?.data?.error || '审核失败，请重试',
+      type: 'error'
+    })
   } finally {
     loading.value = false
   }

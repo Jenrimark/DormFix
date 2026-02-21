@@ -97,7 +97,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getOperationLogs } from '@/api'
+import { useNotification } from '@/composables/useNotification'
 
+const { notify } = useNotification()
 const logs = ref([])
 const loading = ref(false)
 const currentPage = ref(1)
@@ -133,7 +135,10 @@ async function loadLogs() {
     }
   } catch (error) {
     console.error('加载用户日志失败:', error)
-    alert('加载用户日志失败')
+    notify({
+      message: '加载用户日志失败',
+      type: 'error'
+    })
   } finally {
     loading.value = false
   }

@@ -24,14 +24,6 @@
             <input v-model="form.password_confirm" type="password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">角色</label>
-            <select v-model.number="form.role" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary">
-              <option :value="1">学生</option>
-              <option :value="2">维修员</option>
-              <option :value="3">管理员</option>
-            </select>
-          </div>
-          <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">手机号</label>
             <input v-model="form.phone" type="tel" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" />
           </div>
@@ -39,6 +31,17 @@
             <label class="block text-sm font-medium text-gray-700 mb-1">宿舍号</label>
             <input v-model="form.dorm_code" type="text" placeholder="如 北一-305" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" />
           </div>
+          
+          <!-- 提示信息 -->
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p class="text-xs text-blue-700">
+              <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+              </svg>
+              注册账户默认为学生用户，维修员账户需由管理员分配
+            </p>
+          </div>
+          
           <button type="submit" :disabled="loading" class="w-full py-3 bg-cta text-white rounded-lg font-medium hover:bg-cta/90 disabled:opacity-50 cursor-pointer">
             {{ loading ? '注册中...' : '注册' }}
           </button>

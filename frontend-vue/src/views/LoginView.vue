@@ -14,8 +14,8 @@
         <h2 class="font-heading text-2xl font-bold text-textDark mb-6 text-center">登录账号</h2>
         <form @submit.prevent="onSubmit" class="space-y-5">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">用户名</label>
-            <input v-model="form.username" type="text" required placeholder="请输入用户名"
+            <label class="block text-sm font-medium text-gray-700 mb-2">用户名 / 邮箱 / 手机号</label>
+            <input v-model="form.username" type="text" required placeholder="请输入用户名、邮箱或手机号"
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" />
           </div>
           <div>
@@ -32,12 +32,6 @@
         <div class="mt-6 text-center text-gray-600">
           还没有账号？<router-link to="/register" class="text-primary font-medium ml-1">立即注册</router-link>
         </div>
-      </div>
-      <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-        <p class="font-medium mb-2">测试账号</p>
-        <p>学生: student1 / student123</p>
-        <p>维修员: repairman1 / repair123</p>
-        <p>管理员: admin / admin123</p>
       </div>
       <div class="text-center mt-6">
         <router-link to="/" class="text-gray-600 hover:text-primary text-sm">← 返回首页</router-link>

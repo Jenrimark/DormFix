@@ -175,7 +175,9 @@
 import { ref, computed, onMounted } from 'vue'
 import { getMyOrders, startRepair } from '@/api'
 import CompleteRepairDialog from '@/components/CompleteRepairDialog.vue'
+import { useNotification } from '@/composables/useNotification'
 
+const { notify, confirm } = useNotification()
 const loading = ref(true)
 const list = ref([])
 const filterStatus = ref('')
@@ -218,19 +220,31 @@ const showCompleteDialog = (order) => {
 }
 
 const handleStartRepair = async (order) => {
-  if (!confirm(`确定要开始维修工单 ${order.order_sn} 吗？`)) {
-    return
-  }
+  const confirmed = await confirm({
+    title: '确认开始维修',
+    message: `确定要开始维修工单 ${order.order_sn} 吗？`,
+    confirmText: '开始维修',
+    cancelText: '取消',
+    type: 'info'
+  })
+  
+  if (!confirmed) return
   
   operating.value = order.id
   
   try {
     await startRepair(order.id)
-    alert('已开始维修')
+    notify({
+      message: '已开始维修',
+      type: 'success'
+    })
     await load()
   } catch (error) {
     console.error('操作失败:', error)
-    alert(error.response?.data?.error || '操作失败，请重试')
+    notify({
+      message: error.response?.data?.error || '操作失败，请重试',
+      type: 'error'
+    })
   } finally {
     operating.value = null
   }

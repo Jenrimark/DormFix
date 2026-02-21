@@ -161,8 +161,10 @@ import { ref, computed, onMounted } from 'vue'
 import { listAllUsers, deleteUser, resetPassword, toggleUserStatus, batchOperation } from '@/api'
 import UserFormDialog from '@/components/UserFormDialog.vue'
 import { useUserStore } from '@/stores/user'
+import { useNotification } from '@/composables/useNotification'
 
 const userStore = useUserStore()
+const { notify, confirm } = useNotification()
 const users = ref([])
 const loading = ref(false)
 const searchQuery = ref('')
@@ -226,7 +228,10 @@ async function loadUsers() {
     }
   } catch (error) {
     console.error('加载用户列表失败:', error)
-    alert('加载用户列表失败')
+    notify({
+      message: '加载用户列表失败',
+      type: 'error'
+    })
   } finally {
     loading.value = false
   }
@@ -287,91 +292,176 @@ function handleDialogSuccess() {
 
 async function handleToggleStatus(user) {
   const action = user.is_active ? '禁用' : '启用'
-  if (!confirm(`确定要${action}用户 ${user.username} 吗？`)) return
+  const confirmed = await confirm({
+    title: `确认${action}`,
+    message: `确定要${action}用户 ${user.username} 吗？`,
+    confirmText: `确定${action}`,
+    cancelText: '取消',
+    type: 'warning'
+  })
+  
+  if (!confirmed) return
 
   try {
     await toggleUserStatus(user.id)
-    alert(`${action}成功`)
+    notify({
+      message: `${action}成功`,
+      type: 'success'
+    })
     loadUsers()
   } catch (error) {
     console.error(`${action}用户失败:`, error)
-    alert(`${action}失败`)
+    notify({
+      message: `${action}失败`,
+      type: 'error'
+    })
   }
 }
 
 async function handleResetPassword(user) {
-  if (!confirm(`确定要重置用户 ${user.username} 的密码吗？`)) return
+  const confirmed = await confirm({
+    title: '确认重置密码',
+    message: `确定要重置用户 ${user.username} 的密码吗？`,
+    confirmText: '确定重置',
+    cancelText: '取消',
+    type: 'warning'
+  })
+  
+  if (!confirmed) return
 
   try {
     const res = await resetPassword(user.id)
-    alert(`密码重置成功！新密码：${res.data.new_password}`)
+    notify({
+      message: `密码重置成功！新密码：${res.data.new_password}`,
+      type: 'success',
+      duration: 8000
+    })
   } catch (error) {
     console.error('重置密码失败:', error)
-    alert('重置密码失败')
+    notify({
+      message: '重置密码失败',
+      type: 'error'
+    })
   }
 }
 
 async function handleDelete(user) {
-  if (!confirm(`确定要删除用户 ${user.username} 吗？此操作不可恢复！`)) return
+  const confirmed = await confirm({
+    title: '确认删除',
+    message: `确定要删除用户 ${user.username} 吗？此操作不可恢复！`,
+    confirmText: '确定删除',
+    cancelText: '取消',
+    type: 'danger'
+  })
+  
+  if (!confirmed) return
 
   try {
     await deleteUser(user.id)
-    alert('删除成功')
+    notify({
+      message: '删除成功',
+      type: 'success'
+    })
     loadUsers()
   } catch (error) {
     console.error('删除用户失败:', error)
-    alert(error.response?.data?.error || '删除失败')
+    notify({
+      message: error.response?.data?.error || '删除失败',
+      type: 'error'
+    })
   }
 }
 
 async function handleBatchEnable() {
-  if (!confirm(`确定要启用选中的 ${selectedUsers.value.length} 个用户吗？`)) return
+  const confirmed = await confirm({
+    title: '批量启用',
+    message: `确定要启用选中的 ${selectedUsers.value.length} 个用户吗？`,
+    confirmText: '确定启用',
+    cancelText: '取消',
+    type: 'warning'
+  })
+  
+  if (!confirmed) return
 
   try {
     const res = await batchOperation({
       action: 'enable',
       user_ids: selectedUsers.value
     })
-    alert(`批量启用完成：成功 ${res.data.success_count} 个，失败 ${res.data.failed_count} 个`)
+    notify({
+      message: `批量启用完成：成功 ${res.data.success_count} 个，失败 ${res.data.failed_count} 个`,
+      type: 'success'
+    })
     selectedUsers.value = []
     loadUsers()
   } catch (error) {
     console.error('批量启用失败:', error)
-    alert('批量启用失败')
+    notify({
+      message: '批量启用失败',
+      type: 'error'
+    })
   }
 }
 
 async function handleBatchDisable() {
-  if (!confirm(`确定要禁用选中的 ${selectedUsers.value.length} 个用户吗？`)) return
+  const confirmed = await confirm({
+    title: '批量禁用',
+    message: `确定要禁用选中的 ${selectedUsers.value.length} 个用户吗？`,
+    confirmText: '确定禁用',
+    cancelText: '取消',
+    type: 'warning'
+  })
+  
+  if (!confirmed) return
 
   try {
     const res = await batchOperation({
       action: 'disable',
       user_ids: selectedUsers.value
     })
-    alert(`批量禁用完成：成功 ${res.data.success_count} 个，失败 ${res.data.failed_count} 个`)
+    notify({
+      message: `批量禁用完成：成功 ${res.data.success_count} 个，失败 ${res.data.failed_count} 个`,
+      type: 'success'
+    })
     selectedUsers.value = []
     loadUsers()
   } catch (error) {
     console.error('批量禁用失败:', error)
-    alert('批量禁用失败')
+    notify({
+      message: '批量禁用失败',
+      type: 'error'
+    })
   }
 }
 
 async function handleBatchDelete() {
-  if (!confirm(`确定要删除选中的 ${selectedUsers.value.length} 个用户吗？此操作不可恢复！`)) return
+  const confirmed = await confirm({
+    title: '批量删除',
+    message: `确定要删除选中的 ${selectedUsers.value.length} 个用户吗？此操作不可恢复！`,
+    confirmText: '确定删除',
+    cancelText: '取消',
+    type: 'danger'
+  })
+  
+  if (!confirmed) return
 
   try {
     const res = await batchOperation({
       action: 'delete',
       user_ids: selectedUsers.value
     })
-    alert(`批量删除完成：成功 ${res.data.success_count} 个，失败 ${res.data.failed_count} 个`)
+    notify({
+      message: `批量删除完成：成功 ${res.data.success_count} 个，失败 ${res.data.failed_count} 个`,
+      type: 'success'
+    })
     selectedUsers.value = []
     loadUsers()
   } catch (error) {
     console.error('批量删除失败:', error)
-    alert('批量删除失败')
+    notify({
+      message: '批量删除失败',
+      type: 'error'
+    })
   }
 }
 

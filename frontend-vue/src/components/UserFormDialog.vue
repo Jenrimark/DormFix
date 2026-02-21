@@ -113,7 +113,9 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { createUser, updateUser } from '@/api'
+import { useNotification } from '@/composables/useNotification'
 
+const { notify } = useNotification()
 const props = defineProps({
   isOpen: {
     type: Boolean,
@@ -183,15 +185,24 @@ async function handleSubmit() {
       // 编辑模式：不发送密码字段
       delete data.password
       await updateUser(props.user.id, data)
-      alert('用户更新成功')
+      notify({
+        message: '用户更新成功',
+        type: 'success'
+      })
     } else {
       // 创建模式：需要密码
       if (!data.password) {
-        alert('请输入密码')
+        notify({
+          message: '请输入密码',
+          type: 'warning'
+        })
         return
       }
       await createUser(data)
-      alert('用户创建成功')
+      notify({
+        message: '用户创建成功',
+        type: 'success'
+      })
     }
 
     emit('success')
@@ -199,7 +210,10 @@ async function handleSubmit() {
   } catch (error) {
     console.error('提交失败:', error)
     const errorMsg = error.response?.data?.error || error.response?.data?.username?.[0] || '操作失败'
-    alert(errorMsg)
+    notify({
+      message: errorMsg,
+      type: 'error'
+    })
   } finally {
     submitting.value = false
   }

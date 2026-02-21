@@ -110,7 +110,9 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { completeRepair } from '@/api'
+import { useNotification } from '@/composables/useNotification'
 
+const { notify } = useNotification()
 const props = defineProps({
   order: {
     type: Object,
@@ -149,7 +151,10 @@ const clearFile = () => {
 const handleSubmit = async () => {
   // 验证至少填写了维修说明或上传了照片
   if (!formData.repair_description.trim() && !formData.repair_proof_img) {
-    alert('请至少填写维修说明或上传维修照片')
+    notify({
+      message: '请至少填写维修说明或上传维修照片',
+      type: 'warning'
+    })
     return
   }
   
@@ -170,12 +175,18 @@ const handleSubmit = async () => {
     
     await completeRepair(props.order.id, data)
     
-    alert('维修完成！')
+    notify({
+      message: '维修完成！',
+      type: 'success'
+    })
     emit('submit')
     emit('close')
   } catch (error) {
     console.error('提交失败:', error)
-    alert(error.response?.data?.error || '提交失败，请重试')
+    notify({
+      message: error.response?.data?.error || '提交失败，请重试',
+      type: 'error'
+    })
   } finally {
     loading.value = false
   }

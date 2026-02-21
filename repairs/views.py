@@ -195,8 +195,11 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # 获取状态为"待派单"且未分配维修人员的工单
-        orders = self.get_queryset().filter(status=1, repairman__isnull=True)
+        # 直接查询所有待派单工单，不使用 get_queryset()
+        # 这样维修员可以看到所有待派单工单，而不仅仅是分配给自己的
+        orders = WorkOrder.objects.select_related(
+            'user', 'repair_type', 'repairman'
+        ).filter(status=1)
         
         # 按紧急程度和提交时间排序（紧急的优先，同等紧急度按时间倒序）
         priority_order = {'high': 0, 'medium': 1, 'low': 2}
@@ -294,7 +297,14 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        work_order = self.get_object()
+        # 直接查询工单，不使用 get_object()，因为 get_queryset() 会过滤掉未分配的工单
+        try:
+            work_order = WorkOrder.objects.get(pk=pk)
+        except WorkOrder.DoesNotExist:
+            return Response(
+                {'error': '工单不存在'},
+                status=status.HTTP_404_NOT_FOUND
+            )
         
         # 验证工单状态（只能接待派单工单）
         if work_order.status != 1:
@@ -303,7 +313,7 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        # 验证工单未被分配
+        # 验证工单未被接单
         if work_order.repairman is not None:
             return Response(
                 {'error': '该工单已被其他维修人员接取'},

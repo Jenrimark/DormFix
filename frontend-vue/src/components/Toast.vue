@@ -3,7 +3,7 @@
     <Transition name="toast">
       <div
         v-if="visible"
-        :class="['fixed top-4 right-4 z-[100] px-6 py-3 rounded-lg shadow-lg text-white', typeClass]"
+        :class="['fixed top-20 left-1/2 -translate-x-1/2 z-[100] px-6 py-3 rounded-lg shadow-lg text-white', typeClass]"
       >
         {{ message }}
       </div>
@@ -48,6 +48,6 @@ onMounted(() => {
 .toast-enter-from,
 .toast-leave-to {
   opacity: 0;
-  transform: translateX(1rem);
+  transform: translate(-50%, -1rem);
 }
 </style>

@@ -10,7 +10,7 @@
         </svg>
         <div class="flex-1">
           <p class="text-sm text-blue-800">
-            这里显示所有已审核通过、等待接单的工单。紧急工单会优先显示。
+            这里显示所有已审核通过的工单。你可以自主选择接单，先到先得。紧急工单会优先显示。
           </p>
         </div>
       </div>
@@ -86,8 +86,10 @@
 import { ref, onMounted } from 'vue'
 import { getAvailableOrders, acceptOrder } from '@/api'
 import { useRouter } from 'vue-router'
+import { useNotification } from '@/composables/useNotification'
 
 const router = useRouter()
+const { notify, confirm } = useNotification()
 const loading = ref(true)
 const availableOrders = ref([])
 const accepting = ref(null)
@@ -117,15 +119,24 @@ const formatTime = (timeStr) => {
 }
 
 const handleAccept = async (order) => {
-  if (!confirm(`确定要接取工单 ${order.order_sn} 吗？`)) {
-    return
-  }
+  const confirmed = await confirm({
+    title: '确认接单',
+    message: `确定要接取工单 ${order.order_sn} 吗？`,
+    confirmText: '确认接单',
+    cancelText: '取消',
+    type: 'info'
+  })
+  
+  if (!confirmed) return
   
   accepting.value = order.id
   
   try {
-    await acceptOrder(order.id)
-    alert('接单成功！')
+    const response = await acceptOrder(order.id)
+    notify({
+      message: response.data.message || '接单成功！',
+      type: 'success'
+    })
     
     // 从列表中移除已接单的工单
     availableOrders.value = availableOrders.value.filter(o => o.id !== order.id)
@@ -134,7 +145,11 @@ const handleAccept = async (order) => {
     // router.push('/repairman/orders')
   } catch (error) {
     console.error('接单失败:', error)
-    alert(error.response?.data?.error || '接单失败，请重试')
+    const errorMsg = error.response?.data?.error || error.response?.data?.detail || '接单失败，请重试'
+    notify({
+      message: errorMsg,
+      type: 'error'
+    })
   } finally {
     accepting.value = null
   }

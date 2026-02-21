@@ -9,6 +9,8 @@
       </router-view>
     </main>
     <Toast />
+    <NotificationContainer />
+    <ConfirmDialog />
   </div>
 </template>
 
@@ -17,6 +19,8 @@ import { computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import AppNav from '@/components/AppNav.vue'
 import Toast from '@/components/Toast.vue'
+import NotificationContainer from '@/components/NotificationContainer.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useUserStore } from '@/stores/user'
 
 const route = useRoute()

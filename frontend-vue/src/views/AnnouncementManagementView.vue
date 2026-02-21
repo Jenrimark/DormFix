@@ -113,7 +113,9 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement } from '@/api'
+import { useNotification } from '@/composables/useNotification'
 
+const { notify, confirm } = useNotification()
 const announcements = ref([])
 const showCreateDialog = ref(false)
 const editingAnnouncement = ref(null)
@@ -129,7 +131,10 @@ const fetchAnnouncements = async () => {
     announcements.value = data.results || data
   } catch (error) {
     console.error('获取公告失败:', error)
-    alert('获取公告失败')
+    notify({
+      message: '获取公告失败',
+      type: 'error'
+    })
   }
 }
 
@@ -137,16 +142,25 @@ const submitAnnouncement = async () => {
   try {
     if (editingAnnouncement.value) {
       await updateAnnouncement(editingAnnouncement.value.id, form.value)
-      alert('公告更新成功')
+      notify({
+        message: '公告更新成功',
+        type: 'success'
+      })
     } else {
       await createAnnouncement(form.value)
-      alert('公告发布成功')
+      notify({
+        message: '公告发布成功',
+        type: 'success'
+      })
     }
     closeDialog()
     fetchAnnouncements()
   } catch (error) {
     console.error('操作失败:', error)
-    alert('操作失败')
+    notify({
+      message: '操作失败',
+      type: 'error'
+    })
   }
 }
 
@@ -161,15 +175,29 @@ const editAnnouncement = (announcement) => {
 }
 
 const deleteAnnouncementConfirm = async (id) => {
-  if (confirm('确定要删除这条公告吗？')) {
-    try {
-      await deleteAnnouncement(id)
-      alert('删除成功')
-      fetchAnnouncements()
-    } catch (error) {
-      console.error('删除失败:', error)
-      alert('删除失败')
-    }
+  const confirmed = await confirm({
+    title: '确认删除',
+    message: '确定要删除这条公告吗？',
+    confirmText: '确定删除',
+    cancelText: '取消',
+    type: 'danger'
+  })
+  
+  if (!confirmed) return
+  
+  try {
+    await deleteAnnouncement(id)
+    notify({
+      message: '删除成功',
+      type: 'success'
+    })
+    fetchAnnouncements()
+  } catch (error) {
+    console.error('删除失败:', error)
+    notify({
+      message: '删除失败',
+      type: 'error'
+    })
   }
 }
 
