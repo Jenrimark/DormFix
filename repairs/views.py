@@ -21,6 +21,7 @@ class RepairTypeViewSet(viewsets.ModelViewSet):
     queryset = RepairType.objects.all()
     serializer_class = RepairTypeSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = None  # 关闭分页，返回所有故障类型
     
     def get_permissions(self):
         """只有管理员可以增删改，其他人只能查看"""
