@@ -286,7 +286,7 @@ describe('Footer Content', () => {
     expect(footerText).toContain('DormFix - 基于 Django 的宿舍报修工单系统')
 
     // Verify copyright text is present
-    expect(footerText).toContain('软件工程专业毕业设计项目 © 2026')
+    expect(footerText).toContain('毕业设计项目 © 2026')
 
     wrapper.unmount()
   })

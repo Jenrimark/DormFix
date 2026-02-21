@@ -7,7 +7,7 @@ User = get_user_model()
 
 
 class OperationLogModelTestCase(TestCase):
-    """操作日志模型单元测试"""
+    """用户日志模型单元测试"""
     
     def setUp(self):
         """设置测试数据"""
@@ -47,7 +47,7 @@ class OperationLogModelTestCase(TestCase):
         )
     
     def test_create_user_operation_log(self):
-        """测试创建用户操作日志"""
+        """测试创建用户用户日志"""
         log = OperationLog.objects.create(
             operator=self.admin,
             action='create_user',
@@ -64,7 +64,7 @@ class OperationLogModelTestCase(TestCase):
         self.assertIsNotNone(log.created_at)
     
     def test_update_user_operation_log(self):
-        """测试更新用户操作日志"""
+        """测试更新用户用户日志"""
         log = OperationLog.objects.create(
             operator=self.admin,
             action='update_user',
@@ -76,7 +76,7 @@ class OperationLogModelTestCase(TestCase):
         self.assertEqual(log.target_user, self.repairman)
     
     def test_delete_user_operation_log(self):
-        """测试删除用户操作日志"""
+        """测试删除用户用户日志"""
         log = OperationLog.objects.create(
             operator=self.admin,
             action='delete_user',
@@ -88,7 +88,7 @@ class OperationLogModelTestCase(TestCase):
         self.assertEqual(log.get_action_display(), '删除用户')
     
     def test_reset_password_operation_log(self):
-        """测试重置密码操作日志"""
+        """测试重置密码用户日志"""
         log = OperationLog.objects.create(
             operator=self.admin,
             action='reset_password',
@@ -100,7 +100,7 @@ class OperationLogModelTestCase(TestCase):
         self.assertEqual(log.get_action_display(), '重置密码')
     
     def test_toggle_status_operation_log(self):
-        """测试切换状态操作日志"""
+        """测试切换状态用户日志"""
         log = OperationLog.objects.create(
             operator=self.admin,
             action='toggle_status',
@@ -112,7 +112,7 @@ class OperationLogModelTestCase(TestCase):
         self.assertEqual(log.get_action_display(), '切换状态')
     
     def test_assign_order_operation_log(self):
-        """测试派单操作日志"""
+        """测试派单用户日志"""
         log = OperationLog.objects.create(
             operator=self.admin,
             action='assign_order',
@@ -125,7 +125,7 @@ class OperationLogModelTestCase(TestCase):
         self.assertIsNone(log.target_user)
     
     def test_batch_operation_logs(self):
-        """测试批量操作日志"""
+        """测试批量用户日志"""
         # 批量启用
         log1 = OperationLog.objects.create(
             operator=self.admin,
@@ -166,7 +166,7 @@ class OperationLogModelTestCase(TestCase):
             target_user=self.repairman
         )
         
-        # 查询管理员的操作日志
+        # 查询管理员的用户日志
         admin_logs = OperationLog.objects.filter(operator=self.admin)
         self.assertEqual(admin_logs.count(), 2)
     

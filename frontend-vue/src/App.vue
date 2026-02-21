@@ -24,7 +24,10 @@ const userStore = useUserStore()
 const hideNav = computed(() => route.meta.hideNav === true)
 
 onMounted(() => {
-  userStore.fetchUser()
+  // 只在已登录状态下才尝试获取用户信息
+  if (userStore.isLoggedIn) {
+    userStore.fetchUser()
+  }
 })
 </script>
 

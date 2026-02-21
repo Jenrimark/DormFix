@@ -227,7 +227,7 @@ class UserViewSet(viewsets.ModelViewSet):
                 email=email
             )
             
-            # 记录操作日志
+            # 记录用户日志
             OperationLog.objects.create(
                 operator=request.user,
                 action='create_user',
@@ -286,7 +286,7 @@ class UserViewSet(viewsets.ModelViewSet):
         
         user.save()
         
-        # 记录操作日志
+        # 记录用户日志
         description = f'更新用户 {user.username}'
         if old_role != user.role:
             description += f'，角色从 {old_role} 修改为 {user.role}'
@@ -331,7 +331,7 @@ class UserViewSet(viewsets.ModelViewSet):
         
         username = user.username
         
-        # 记录操作日志（在删除前）
+        # 记录用户日志（在删除前）
         OperationLog.objects.create(
             operator=request.user,
             action='delete_user',
@@ -379,7 +379,7 @@ class UserViewSet(viewsets.ModelViewSet):
         user.set_password(new_password)
         user.save()
         
-        # 记录操作日志
+        # 记录用户日志
         OperationLog.objects.create(
             operator=request.user,
             action='reset_password',
@@ -422,7 +422,7 @@ class UserViewSet(viewsets.ModelViewSet):
         user.is_active = not user.is_active
         user.save()
         
-        # 记录操作日志
+        # 记录用户日志
         action_desc = '启用' if user.is_active else '禁用'
         OperationLog.objects.create(
             operator=request.user,
@@ -508,7 +508,7 @@ class UserViewSet(viewsets.ModelViewSet):
                     success_count += 1
                     continue
                 
-                # 记录操作日志（非删除操作）
+                # 记录用户日志（非删除操作）
                 OperationLog.objects.create(
                     operator=request.user,
                     action=action_type,
@@ -556,14 +556,14 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class OperationLogViewSet(viewsets.ReadOnlyModelViewSet):
-    """操作日志视图集（只读）"""
+    """用户日志视图集（只读）"""
     
     queryset = OperationLog.objects.all()
     serializer_class = OperationLogSerializer
     permission_classes = [IsAdmin]
     
     def get_queryset(self):
-        """获取操作日志列表，支持筛选"""
+        """获取用户日志列表，支持筛选"""
         queryset = OperationLog.objects.all()
         
         # 按操作人筛选

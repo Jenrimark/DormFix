@@ -112,7 +112,7 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 
 class OperationLogSerializer(serializers.ModelSerializer):
-    """操作日志序列化器"""
+    """用户日志序列化器"""
     
     operator_username = serializers.CharField(source='operator.username', read_only=True)
     operator_real_name = serializers.CharField(source='operator.real_name', read_only=True)

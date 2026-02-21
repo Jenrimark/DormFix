@@ -99,7 +99,7 @@ export const resetPassword = (id) => api.post(`/accounts/users/${id}/reset_passw
 export const toggleUserStatus = (id) => api.post(`/accounts/users/${id}/toggle_status/`)
 export const batchOperation = (data) => api.post('/accounts/users/batch_operation/', data)
 
-// 操作日志（管理员）
+// 用户日志（管理员）
 export const getOperationLogs = (params) => api.get('/accounts/operation-logs/', { params })
 
 // 报修流程相关接口
@@ -110,3 +110,10 @@ export const startRepair = (id) => api.post(`/repairs/work-orders/${id}/start_re
 export const completeRepair = (id, formData) => api.post(`/repairs/work-orders/${id}/complete_repair/`, formData, {
   headers: { 'Content-Type': 'multipart/form-data' }
 })
+
+// 系统公告
+export const getLatestAnnouncements = () => api.get('/announcements/latest/')
+export const getAnnouncements = (params) => api.get('/announcements/', { params })
+export const createAnnouncement = (data) => api.post('/announcements/', data)
+export const updateAnnouncement = (id, data) => api.put(`/announcements/${id}/`, data)
+export const deleteAnnouncement = (id) => api.delete(`/announcements/${id}/`)

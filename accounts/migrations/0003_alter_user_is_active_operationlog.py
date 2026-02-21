@@ -31,8 +31,8 @@ class Migration(migrations.Migration):
                 ('target_user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='target_logs', to=settings.AUTH_USER_MODEL, verbose_name='目标用户')),
             ],
             options={
-                'verbose_name': '操作日志',
-                'verbose_name_plural': '操作日志',
+                'verbose_name': '用户日志',
+                'verbose_name_plural': '用户日志',
                 'db_table': 'operation_logs',
                 'ordering': ['-created_at'],
                 'indexes': [models.Index(fields=['operator'], name='operation_l_operato_b6afa6_idx'), models.Index(fields=['action'], name='operation_l_action_23516c_idx'), models.Index(fields=['created_at'], name='operation_l_created_3fec78_idx')],

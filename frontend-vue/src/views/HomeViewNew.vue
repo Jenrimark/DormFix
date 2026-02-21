@@ -65,7 +65,7 @@
             ref="stat3"
             :target="98"
             suffix="%"
-            label="用户满意度"
+            label="学生满意度"
           />
         </div>
       </div>
@@ -134,7 +134,7 @@
     <!-- Footer -->
     <footer class="py-8 text-center text-gray-400 border-t border-white/10">
       <p class="text-lg font-medium mb-2">DormFix - 基于 Django 的宿舍报修工单系统</p>
-      <p class="text-sm">软件工程专业毕业设计项目 © 2026</p>
+      <p class="text-sm">毕业设计项目 © 2026</p>
     </footer>
   </div>
 </template>

@@ -58,13 +58,13 @@
 
         <!-- CTA Buttons -->
         <div class="flex flex-col sm:flex-row gap-4 justify-center mb-16 animate-fade-in-up animation-delay-400">
-          <router-link to="/submit-order" class="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
-            <span class="relative z-10">立即报修</span>
+          <button @click="scrollToSection('notification')" class="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 cursor-pointer">
+            <span class="relative z-10">通知中心</span>
             <div class="absolute inset-0 bg-gradient-to-r from-purple-700 to-cyan-700 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-          </router-link>
-          <router-link to="/order-tracking" class="px-8 py-4 bg-white text-gray-800 rounded-xl font-semibold text-lg shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 border-2 border-gray-200 hover:border-purple-300 cursor-pointer">
-            查看工单
-          </router-link>
+          </button>
+          <button @click="scrollToSection('features')" class="px-8 py-4 bg-white text-gray-800 rounded-xl font-semibold text-lg shadow-lg hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300 border-2 border-gray-200 hover:border-purple-300 cursor-pointer">
+            核心功能
+          </button>
         </div>
 
         <!-- Stats -->
@@ -74,12 +74,12 @@
             <div class="text-gray-600 font-medium">平均响应时间</div>
           </div>
           <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300">
-            <div class="text-4xl font-black gradient-text-large mb-2">1500+</div>
-            <div class="text-gray-600 font-medium">已处理工单</div>
+            <div class="text-4xl font-black gradient-text-large mb-2">4.5h</div>
+            <div class="text-gray-600 font-medium">平均报修时长</div>
           </div>
           <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300">
             <div class="text-4xl font-black gradient-text-large mb-2">98%</div>
-            <div class="text-gray-600 font-medium">用户满意度</div>
+            <div class="text-gray-600 font-medium">学生满意度</div>
           </div>
         </div>
 
@@ -92,8 +92,127 @@
       </div>
     </section>
 
+    <!-- Notification Section -->
+    <section id="notification" class="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+      <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-16">
+          <h2 class="text-4xl sm:text-5xl font-bold mb-4">
+            <span class="gradient-text-large">通知中心</span>
+          </h2>
+          <p class="text-xl text-gray-600">系统公告与重要提醒</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- System Announcements -->
+          <div class="bg-white rounded-2xl p-8 shadow-lg border border-purple-100">
+            <div class="flex items-center mb-6">
+              <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mr-4">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path>
+                </svg>
+              </div>
+              <h3 class="text-2xl font-bold text-gray-800">系统公告</h3>
+            </div>
+            
+            <div class="space-y-4">
+              <div 
+                v-for="(announcement, index) in announcements" 
+                :key="announcement.id"
+                class="group p-4 rounded-xl bg-gradient-to-r hover:from-purple-100 transition-all duration-300 cursor-pointer border-l-4"
+                :class="{
+                  'from-purple-50 to-transparent border-purple-500': index === 0,
+                  'from-cyan-50 to-transparent border-cyan-500': index === 1,
+                  'from-pink-50 to-transparent border-pink-500': index === 2
+                }"
+              >
+                <div class="flex items-start justify-between mb-2">
+                  <h4 
+                    class="font-semibold text-gray-800 transition-colors"
+                    :class="{
+                      'group-hover:text-purple-600': index === 0,
+                      'group-hover:text-cyan-600': index === 1,
+                      'group-hover:text-pink-600': index === 2
+                    }"
+                  >{{ announcement.title }}</h4>
+                  <span class="text-xs text-gray-500 whitespace-nowrap ml-2">{{ formatTime(announcement.created_at) }}</span>
+                </div>
+                <p class="text-sm text-gray-600 mb-2">{{ announcement.content }}</p>
+                <div class="text-xs text-gray-400">发布者：{{ announcement.author_real_name || announcement.author_name }}</div>
+              </div>
+              
+              <!-- 如果没有公告，显示提示 -->
+              <div v-if="announcements.length === 0" class="text-center py-8 text-gray-400">
+                暂无公告
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Stats & Reminders -->
+          <div class="space-y-6">
+            <!-- Stats Card -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg border border-cyan-100">
+              <div class="flex items-center mb-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-xl flex items-center justify-center mr-4">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                  </svg>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-800">实时数据</h3>
+              </div>
+              
+              <div class="grid grid-cols-2 gap-4">
+                <div class="p-4 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200">
+                  <div class="text-3xl font-black gradient-text-large mb-1">12</div>
+                  <div class="text-sm text-gray-600">待审核工单</div>
+                </div>
+                <div class="p-4 rounded-xl bg-gradient-to-br from-cyan-50 to-cyan-100 border border-cyan-200">
+                  <div class="text-3xl font-black gradient-text-large mb-1">8</div>
+                  <div class="text-sm text-gray-600">维修中</div>
+                </div>
+                <div class="p-4 rounded-xl bg-gradient-to-br from-pink-50 to-pink-100 border border-pink-200">
+                  <div class="text-3xl font-black gradient-text-large mb-1">25</div>
+                  <div class="text-sm text-gray-600">今日完成</div>
+                </div>
+                <div class="p-4 rounded-xl bg-gradient-to-br from-indigo-50 to-indigo-100 border border-indigo-200">
+                  <div class="text-3xl font-black gradient-text-large mb-1">5</div>
+                  <div class="text-sm text-gray-600">待接单</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Important Reminders -->
+            <div class="bg-white rounded-2xl p-8 shadow-lg border border-pink-100">
+              <div class="flex items-center mb-6">
+                <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl flex items-center justify-center mr-4">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-800">重要提醒</h3>
+              </div>
+              
+              <div class="space-y-3">
+                <div class="flex items-center p-3 rounded-lg bg-yellow-50 border border-yellow-200">
+                  <div class="w-2 h-2 bg-yellow-500 rounded-full mr-3 animate-pulse"></div>
+                  <span class="text-sm text-gray-700">紧急工单需在2小时内响应</span>
+                </div>
+                <div class="flex items-center p-3 rounded-lg bg-blue-50 border border-blue-200">
+                  <div class="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                  <span class="text-sm text-gray-700">定期检查工单处理进度</span>
+                </div>
+                <div class="flex items-center p-3 rounded-lg bg-green-50 border border-green-200">
+                  <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                  <span class="text-sm text-gray-700">及时更新维修状态信息</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Features Section - Full Width -->
-    <section class="py-20 px-4 sm:px-6 lg:px-8 bg-white">
+    <section id="features" class="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-purple-50 via-white to-cyan-50">
       <div class="max-w-7xl mx-auto">
         <div class="text-center mb-16">
           <h2 class="text-4xl sm:text-5xl font-bold mb-4">
@@ -206,49 +325,83 @@
       </div>
     </section>
 
-    <!-- Demo Section -->
-    <section class="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-purple-50 via-white to-cyan-50">
-      <div class="max-w-7xl mx-auto">
-        <div class="text-center mb-16">
-          <h2 class="text-4xl sm:text-5xl font-bold mb-4">
-            <span class="gradient-text-large">快速开始</span>
-          </h2>
-          <p class="text-xl text-gray-600">选择你的角色，立即体验系统功能</p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <router-link to="/submit-order" class="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-purple-300">
-            <div class="text-5xl mb-4">📝</div>
-            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-purple-600 transition-colors">工单提交</h3>
-            <p class="text-gray-600">学生端 - 提交报修申请</p>
-          </router-link>
-          
-          <router-link to="/admin" class="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-cyan-300">
-            <div class="text-5xl mb-4">📊</div>
-            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-cyan-600 transition-colors">管理仪表盘</h3>
-            <p class="text-gray-600">管理员 - 数据可视化</p>
-          </router-link>
-          
-          <router-link to="/order-tracking" class="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300 cursor-pointer border-2 border-transparent hover:border-pink-300">
-            <div class="text-5xl mb-4">🔍</div>
-            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-pink-600 transition-colors">工单跟踪</h3>
-            <p class="text-gray-600">进度查询</p>
-          </router-link>
-        </div>
-      </div>
-    </section>
-
     <!-- Footer -->
     <footer class="py-12 px-4 sm:px-6 lg:px-8 bg-white border-t border-gray-200">
       <div class="max-w-7xl mx-auto text-center">
         <p class="text-lg font-medium text-gray-800 mb-2">DormFix - 基于 Django 的宿舍报修工单系统</p>
-        <p class="text-sm text-gray-600">软件工程专业毕业设计项目 © 2026</p>
+        <p class="text-sm text-gray-600">毕业设计项目 © 2026</p>
       </div>
     </footer>
   </div>
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
+import { getLatestAnnouncements } from '@/api'
+
+const announcements = ref([])
+
+const scrollToSection = (sectionId) => {
+  const element = document.getElementById(sectionId);
+  if (element) {
+    element.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'start'
+    });
+  }
+};
+
+// 获取最新公告
+const fetchAnnouncements = async () => {
+  try {
+    const { data } = await getLatestAnnouncements()
+    announcements.value = data
+  } catch (error) {
+    console.error('获取公告失败:', error)
+    // 如果获取失败，使用默认公告
+    announcements.value = [
+      {
+        id: 1,
+        title: '系统维护通知',
+        content: '系统将于本周六凌晨2:00-4:00进行例行维护，期间可能无法访问。',
+        author_real_name: '系统管理员',
+        created_at: '2小时前'
+      },
+      {
+        id: 2,
+        title: '新功能上线',
+        content: '工单审核流程已优化，管理员可以更高效地处理报修申请。',
+        author_real_name: '系统管理员',
+        created_at: '1天前'
+      },
+      {
+        id: 3,
+        title: '服务时间调整',
+        content: '维修服务时间调整为工作日 8:00-18:00，节假日暂停服务。',
+        author_real_name: '系统管理员',
+        created_at: '3天前'
+      }
+    ]
+  }
+}
+
+// 格式化时间
+const formatTime = (dateString) => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diff = Math.floor((now - date) / 1000) // 秒
+  
+  if (diff < 60) return '刚刚'
+  if (diff < 3600) return `${Math.floor(diff / 60)}分钟前`
+  if (diff < 86400) return `${Math.floor(diff / 3600)}小时前`
+  if (diff < 2592000) return `${Math.floor(diff / 86400)}天前`
+  
+  return date.toLocaleDateString('zh-CN')
+}
+
+onMounted(() => {
+  fetchAnnouncements()
+})
 </script>
 
 <style scoped>

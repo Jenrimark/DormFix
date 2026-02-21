@@ -174,7 +174,7 @@ class UserManagementPropertyTests(TransactionTestCase):
         Feature: user-management-and-role-optimization, Property 4: 角色修改生效并记录日志
         
         对于任何用户和新角色，修改用户角色后，用户的角色应该更新为新角色，
-        且系统应该创建一条操作日志记录。
+        且系统应该创建一条用户日志记录。
         
         验证：需求 1.7
         """
@@ -205,13 +205,13 @@ class UserManagementPropertyTests(TransactionTestCase):
             # 验证角色已更新
             assert test_user.role == new_role, f"角色未更新：期望={new_role}, 实际={test_user.role}"
             
-            # 验证操作日志已创建
+            # 验证用户日志已创建
             log_count_after = OperationLog.objects.filter(
                 action='update_user',
                 target_user=test_user
             ).count()
             
-            assert log_count_after > log_count_before, "应该创建操作日志"
+            assert log_count_after > log_count_before, "应该创建用户日志"
     
     @settings(max_examples=100)
     @given(
@@ -623,7 +623,7 @@ class BatchOperationPropertyTests(TransactionTestCase):
 
 
 class OperationLogPropertyTests(TransactionTestCase):
-    """操作日志属性测试"""
+    """用户日志属性测试"""
     
     def setUp(self):
         """设置测试环境"""
@@ -643,14 +643,14 @@ class OperationLogPropertyTests(TransactionTestCase):
     )
     def test_property_operation_logs_filterable(self, action_type):
         """
-        属性 24：操作日志可筛选
-        Feature: user-management-and-role-optimization, Property 24: 操作日志可筛选
+        属性 24：用户日志可筛选
+        Feature: user-management-and-role-optimization, Property 24: 用户日志可筛选
         
-        对于任何操作日志查询条件（时间、操作人、操作类型），返回的日志记录都应该匹配筛选条件。
+        对于任何用户日志查询条件（时间、操作人、操作类型），返回的日志记录都应该匹配筛选条件。
         
         验证：需求 6.4
         """
-        # 创建不同类型的操作日志
+        # 创建不同类型的用户日志
         test_user = User.objects.create_user(
             username=f'log_test_user_{uuid.uuid4().hex[:8]}',
             password='test123',

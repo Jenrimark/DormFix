@@ -36,6 +36,12 @@ const routes = [
     meta: { requiresAuth: true, roles: [3] } // 仅管理员可访问
   },
   { 
+    path: '/admin/announcements', 
+    name: 'AnnouncementManagement', 
+    component: () => import('@/views/AnnouncementManagementView.vue'),
+    meta: { requiresAuth: true, roles: [3] } // 仅管理员可访问
+  },
+  { 
     path: '/admin/review', 
     name: 'AdminReview', 
     component: () => import('@/views/AdminReviewView.vue'),

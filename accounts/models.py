@@ -139,7 +139,7 @@ class User(AbstractUser):
 
 class OperationLog(models.Model):
     """
-    操作日志表
+    用户日志表
     记录系统中的重要操作，用于审计和追溯
     """
     
@@ -206,7 +206,7 @@ class OperationLog(models.Model):
     
     class Meta:
         db_table = 'operation_logs'
-        verbose_name = '操作日志'
+        verbose_name = '用户日志'
         verbose_name_plural = verbose_name
         ordering = ['-created_at']
         indexes = [

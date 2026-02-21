@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="font-heading text-2xl font-bold text-textDark mb-6">操作日志</h1>
+    <h1 class="font-heading text-2xl font-bold text-textDark mb-6">用户日志</h1>
 
     <!-- 筛选条件 -->
     <div class="bg-white rounded-xl p-4 shadow-sm mb-4">
@@ -53,7 +53,6 @@
             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">时间</th>
             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">操作人</th>
             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">操作类型</th>
-            <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">目标</th>
             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">描述</th>
             <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">IP地址</th>
           </tr>
@@ -61,13 +60,12 @@
         <tbody class="divide-y divide-gray-100">
           <tr v-for="log in logs" :key="log.id" class="hover:bg-gray-50">
             <td class="px-4 py-3 text-sm text-gray-600">{{ formatDateTime(log.created_at) }}</td>
-            <td class="px-4 py-3 text-sm text-gray-900">{{ log.operator }}</td>
+            <td class="px-4 py-3 text-sm text-gray-900">{{ log.operator_real_name || log.operator_username || log.operator || '-' }}</td>
             <td class="px-4 py-3 text-sm">
               <span :class="getActionBadgeClass(log.action)">
-                {{ getActionText(log.action) }}
+                {{ log.action_display || getActionText(log.action) }}
               </span>
             </td>
-            <td class="px-4 py-3 text-sm text-gray-900">{{ log.target || '-' }}</td>
             <td class="px-4 py-3 text-sm text-gray-600">{{ log.description || '-' }}</td>
             <td class="px-4 py-3 text-sm text-gray-600">{{ log.ip_address || '-' }}</td>
           </tr>
@@ -134,8 +132,8 @@ async function loadLogs() {
       totalPages.value = Math.ceil(res.data.count / pageSize)
     }
   } catch (error) {
-    console.error('加载操作日志失败:', error)
-    alert('加载操作日志失败')
+    console.error('加载用户日志失败:', error)
+    alert('加载用户日志失败')
   } finally {
     loading.value = false
   }
