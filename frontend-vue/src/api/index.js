@@ -101,3 +101,12 @@ export const batchOperation = (data) => api.post('/accounts/users/batch_operatio
 
 // 操作日志（管理员）
 export const getOperationLogs = (params) => api.get('/accounts/operation-logs/', { params })
+
+// 报修流程相关接口
+export const reviewOrder = (id, data) => api.post(`/repairs/work-orders/${id}/review/`, data)
+export const getAvailableOrders = (params) => api.get('/repairs/work-orders/available/', { params })
+export const acceptOrder = (id) => api.post(`/repairs/work-orders/${id}/accept/`)
+export const startRepair = (id) => api.post(`/repairs/work-orders/${id}/start_repair/`)
+export const completeRepair = (id, formData) => api.post(`/repairs/work-orders/${id}/complete_repair/`, formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+})

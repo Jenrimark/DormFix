@@ -185,6 +185,149 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(orders, many=True)
         return Response(serializer.data)
     
+    @action(detail=False, methods=['get'])
+    def available(self, request):
+        """获取接单池工单（维修人员）"""
+        if not request.user.is_repairman():
+            return Response(
+                {'error': '权限不足，只有维修人员可以访问接单池'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # 获取状态为"待派单"且未分配维修人员的工单
+        orders = self.get_queryset().filter(status=1, repairman__isnull=True)
+        
+        # 按紧急程度和提交时间排序（紧急的优先，同等紧急度按时间倒序）
+        priority_order = {'high': 0, 'medium': 1, 'low': 2}
+        orders = sorted(
+            orders,
+            key=lambda x: (priority_order.get(x.priority, 1), -x.create_time.timestamp())
+        )
+        
+        page = self.paginate_queryset(orders)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        serializer = self.get_serializer(orders, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=['post'])
+    def review(self, request, pk=None):
+        """审核工单（管理员）"""
+        if not request.user.is_admin():
+            return Response(
+                {'error': '权限不足'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        work_order = self.get_object()
+        action_type = request.data.get('action')  # 'pass' or 'reject'
+        remark = request.data.get('remark', '')
+        
+        # 验证工单状态
+        if work_order.status != 0:
+            return Response(
+                {'error': '只能审核待审核状态的工单'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if not action_type or action_type not in ['pass', 'reject']:
+            return Response(
+                {'error': '请提供有效的审核操作（pass 或 reject）'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 记录审核信息
+        work_order.reviewer = request.user
+        work_order.review_time = timezone.now()
+        work_order.review_remark = remark
+        
+        if action_type == 'pass':
+            # 审核通过，状态变为待派单
+            work_order.status = 1
+            work_order.save()
+            
+            # 记录审核通过日志
+            OrderLog.objects.create(
+                work_order=work_order,
+                operator=request.user,
+                action='review_pass',
+                remark=remark or '审核通过'
+            )
+            
+            message = '审核通过'
+        else:
+            # 审核拒绝，状态变为已取消
+            if not remark:
+                return Response(
+                    {'error': '审核拒绝必须填写原因'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            work_order.status = 4
+            work_order.save()
+            
+            # 记录审核拒绝日志
+            OrderLog.objects.create(
+                work_order=work_order,
+                operator=request.user,
+                action='review_reject',
+                remark=remark
+            )
+            
+            message = '审核拒绝'
+        
+        serializer = self.get_serializer(work_order)
+        return Response({
+            'message': message,
+            'order': serializer.data
+        })
+    
+    @action(detail=True, methods=['post'])
+    def accept(self, request, pk=None):
+        """接单（维修人员）"""
+        if not request.user.is_repairman():
+            return Response(
+                {'error': '权限不足，只有维修人员可以接单'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        work_order = self.get_object()
+        
+        # 验证工单状态（只能接待派单工单）
+        if work_order.status != 1:
+            return Response(
+                {'error': '只能接取待派单状态的工单'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 验证工单未被分配
+        if work_order.repairman is not None:
+            return Response(
+                {'error': '该工单已被其他维修人员接取'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 分配维修人员并记录接单时间
+        work_order.repairman = request.user
+        work_order.accept_time = timezone.now()
+        work_order.save()
+        
+        # 记录接单日志
+        OrderLog.objects.create(
+            work_order=work_order,
+            operator=request.user,
+            action='accept',
+            remark=f'{request.user.real_name or request.user.username} 接单'
+        )
+        
+        serializer = self.get_serializer(work_order)
+        return Response({
+            'message': '接单成功',
+            'order': serializer.data
+        })
+    
     @action(detail=True, methods=['post'])
     def assign(self, request, pk=None):
         """派单（管理员）"""
@@ -214,6 +357,7 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
         
         work_order.repairman = repairman
         work_order.status = 1  # 已派单
+        work_order.accept_time = timezone.now()  # 记录派单时间（管理员派单）
         work_order.save()
         
         # 记录派单日志
@@ -221,12 +365,130 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
             work_order=work_order,
             operator=request.user,
             action='assign',
-            remark=f'派单给 {repairman.username}'
+            remark=f'派单给 {repairman.real_name or repairman.username}'
         )
         
         serializer = self.get_serializer(work_order)
         return Response({
             'message': '派单成功',
+            'order': serializer.data
+        })
+    
+    @action(detail=True, methods=['post'])
+    def start_repair(self, request, pk=None):
+        """开始维修（维修人员）"""
+        work_order = self.get_object()
+        user = request.user
+        
+        # 验证权限：只有维修人员可以开始维修
+        if not user.is_repairman():
+            return Response(
+                {'error': '权限不足，只有维修人员可以开始维修'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # 验证是否是被分配的维修人员
+        if work_order.repairman != user:
+            return Response(
+                {'error': '只能开始分配给自己的工单'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # 验证工单状态（只能开始已派单工单）
+        if work_order.status != 1:
+            return Response(
+                {'error': '只能开始已派单状态的工单'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 更新状态为维修中，记录开始时间
+        work_order.status = 2
+        work_order.start_time = timezone.now()
+        work_order.save()
+        
+        # 记录开始维修日志
+        OrderLog.objects.create(
+            work_order=work_order,
+            operator=user,
+            action='start',
+            remark='开始维修'
+        )
+        
+        serializer = self.get_serializer(work_order)
+        return Response({
+            'message': '已开始维修',
+            'order': serializer.data
+        })
+    
+    @action(detail=True, methods=['post'])
+    def complete_repair(self, request, pk=None):
+        """完成维修（维修人员）"""
+        work_order = self.get_object()
+        user = request.user
+        
+        # 验证权限：只有维修人员可以完成维修
+        if not user.is_repairman():
+            return Response(
+                {'error': '权限不足，只有维修人员可以完成维修'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # 验证是否是被分配的维修人员
+        if work_order.repairman != user:
+            return Response(
+                {'error': '只能完成分配给自己的工单'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # 验证工单状态（只能完成维修中工单）
+        if work_order.status != 2:
+            return Response(
+                {'error': '只能完成维修中状态的工单'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 获取维修凭证数据
+        repair_proof_img = request.FILES.get('repair_proof_img')
+        repair_description = request.data.get('repair_description', '')
+        materials = request.data.get('materials', '')
+        
+        # 验证至少提供照片或说明
+        if not repair_proof_img and not repair_description:
+            return Response(
+                {'error': '请至少上传维修照片或填写维修说明'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # 更新工单信息
+        work_order.status = 3
+        work_order.finish_time = timezone.now()
+        if repair_proof_img:
+            work_order.repair_proof_img = repair_proof_img
+        if repair_description:
+            work_order.repair_description = repair_description
+        if materials:
+            # 将耗材信息追加到备注中
+            if work_order.remark:
+                work_order.remark += f'\n耗材：{materials}'
+            else:
+                work_order.remark = f'耗材：{materials}'
+        work_order.save()
+        
+        # 记录完成维修日志
+        log_remark = repair_description or '维修完成'
+        if materials:
+            log_remark += f'，耗材：{materials}'
+        
+        OrderLog.objects.create(
+            work_order=work_order,
+            operator=user,
+            action='complete',
+            remark=log_remark
+        )
+        
+        serializer = self.get_serializer(work_order)
+        return Response({
+            'message': '维修完成',
             'order': serializer.data
         })
     

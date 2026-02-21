@@ -131,15 +131,66 @@ class WorkOrder(models.Model):
         help_text='派单后填充'
     )
     
+    reviewer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        related_name='reviewed_orders',
+        verbose_name='审核人',
+        blank=True,
+        null=True,
+        help_text='审核工单的管理员'
+    )
+    
     create_time = models.DateTimeField(
         verbose_name='提交时间',
         auto_now_add=True
+    )
+    
+    review_time = models.DateTimeField(
+        verbose_name='审核时间',
+        blank=True,
+        null=True
+    )
+    
+    review_remark = models.TextField(
+        verbose_name='审核备注',
+        blank=True,
+        null=True,
+        help_text='审核通过或拒绝的原因'
+    )
+    
+    accept_time = models.DateTimeField(
+        verbose_name='接单时间',
+        blank=True,
+        null=True,
+        help_text='维修人员接单的时间'
+    )
+    
+    start_time = models.DateTimeField(
+        verbose_name='开始维修时间',
+        blank=True,
+        null=True
     )
     
     finish_time = models.DateTimeField(
         verbose_name='完工时间',
         blank=True,
         null=True
+    )
+    
+    repair_proof_img = models.ImageField(
+        verbose_name='维修凭证照片',
+        upload_to='repair_proofs/%Y/%m/',
+        blank=True,
+        null=True,
+        help_text='维修完成后上传的照片'
+    )
+    
+    repair_description = models.TextField(
+        verbose_name='维修说明',
+        blank=True,
+        null=True,
+        help_text='维修过程和结果说明'
     )
     
     remark = models.TextField(
@@ -206,8 +257,10 @@ class OrderLog(models.Model):
     
     ACTION_CHOICES = (
         ('submit', '提交'),
-        ('review', '审核'),
+        ('review_pass', '审核通过'),
+        ('review_reject', '审核拒绝'),
         ('assign', '派单'),
+        ('accept', '接单'),
         ('start', '开始维修'),
         ('complete', '完工'),
         ('cancel', '取消'),

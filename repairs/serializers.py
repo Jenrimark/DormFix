@@ -41,6 +41,7 @@ class WorkOrderSerializer(serializers.ModelSerializer):
     
     user_info = UserSerializer(source='user', read_only=True)
     repairman_info = UserSerializer(source='repairman', read_only=True)
+    reviewer_info = UserSerializer(source='reviewer', read_only=True)
     repair_type_info = RepairTypeSerializer(source='repair_type', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
@@ -52,7 +53,9 @@ class WorkOrderSerializer(serializers.ModelSerializer):
         fields = ['id', 'order_sn', 'user', 'user_info', 'repair_type', 
                   'repair_type_info', 'status', 'status_display', 'priority', 
                   'priority_display', 'content', 'img_proof', 'repairman', 
-                  'repairman_info', 'create_time', 'finish_time', 'remark',
+                  'repairman_info', 'reviewer', 'reviewer_info', 'create_time', 
+                  'review_time', 'review_remark', 'accept_time', 'start_time',
+                  'finish_time', 'repair_proof_img', 'repair_description', 'remark',
                   'logs', 'comment']
         read_only_fields = ['id', 'order_sn', 'user', 'create_time']
 

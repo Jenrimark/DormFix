@@ -36,6 +36,24 @@ const routes = [
     meta: { requiresAuth: true, roles: [3] } // 仅管理员可访问
   },
   { 
+    path: '/admin/review', 
+    name: 'AdminReview', 
+    component: () => import('@/views/AdminReviewView.vue'),
+    meta: { requiresAuth: true, roles: [3] } // 仅管理员可访问
+  },
+  { 
+    path: '/repairman/accept', 
+    name: 'RepairmanAccept', 
+    component: () => import('@/views/RepairmanAcceptView.vue'),
+    meta: { requiresAuth: true, roles: [2] } // 仅维修人员可访问
+  },
+  { 
+    path: '/repairman/orders', 
+    name: 'RepairmanOrders', 
+    component: () => import('@/views/RepairmanOrdersView.vue'),
+    meta: { requiresAuth: true, roles: [2] } // 仅维修人员可访问
+  },
+  { 
     path: '/profile', 
     name: 'Profile', 
     component: () => import('@/views/ProfileView.vue'),

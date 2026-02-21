@@ -19,15 +19,16 @@
               <router-link to="/orders" class="text-gray-600 hover:text-primary transition-colors">我的工单</router-link>
             </template>
             
-            <!-- 维修人员：显示"待接单"、"我的工单"，隐藏"提交报修" -->
+            <!-- 维修人员：显示"接单池"、"我的工单"，隐藏"提交报修" -->
             <template v-if="userStore.user?.role === 2">
-              <router-link to="/orders" class="text-gray-600 hover:text-primary transition-colors">待接单</router-link>
-              <router-link to="/orders" class="text-gray-600 hover:text-primary transition-colors">我的工单</router-link>
+              <router-link to="/repairman/accept" class="text-gray-600 hover:text-primary transition-colors">接单池</router-link>
+              <router-link to="/repairman/orders" class="text-gray-600 hover:text-primary transition-colors">我的工单</router-link>
             </template>
             
-            <!-- 管理员：显示"管理仪表盘"、"用户管理"、"工单管理"、"操作日志"，隐藏"提交报修" -->
+            <!-- 管理员：显示"管理仪表盘"、"工单审核"、"用户管理"、"工单管理"、"操作日志"，隐藏"提交报修" -->
             <template v-if="userStore.user?.role === 3">
               <router-link to="/admin" class="text-gray-600 hover:text-primary transition-colors">管理仪表盘</router-link>
+              <router-link to="/admin/review" class="text-gray-600 hover:text-primary transition-colors">工单审核</router-link>
               <router-link to="/admin/users" class="text-gray-600 hover:text-primary transition-colors">用户管理</router-link>
               <router-link to="/orders" class="text-gray-600 hover:text-primary transition-colors">工单管理</router-link>
               <router-link to="/admin/logs" class="text-gray-600 hover:text-primary transition-colors">操作日志</router-link>
