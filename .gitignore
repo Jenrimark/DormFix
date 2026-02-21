@@ -37,9 +37,9 @@ env/
 logs/
 staticfiles/
 
-# 注意：保留 db.sqlite3 和 media/ 用于开发
-# db.sqlite3
-# media/
+# 注意：忽略数据库和媒体文件，让每个环境自己生成
+db.sqlite3
+media/
 
 # ============================================
 # Node.js / Frontend (依赖文件)

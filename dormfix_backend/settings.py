@@ -20,6 +20,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # 从项目根目录的 .env 加载环境变量（如 DB_PASSWORD）
 load_dotenv(BASE_DIR / '.env')
 
+# 自动创建必要的目录
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(exist_ok=True)
+
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
