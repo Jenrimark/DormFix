@@ -28,9 +28,6 @@
 
 3. 系统会自动检测 `.env` 中的 `DB_PASSWORD`，如果存在则使用 MySQL
 
-#### 文件存储说明
-- 本项目使用**数据库存储**上传文件（图片等），不需要 `media/` 文件夹
-- `logs/` 文件夹会在首次启动时自动创建
 
 ### 启动项目
 
@@ -43,7 +40,8 @@ cd DormFix
 
 # 2. 创建虚拟环境并安装后端依赖
 python3 -m venv venv
-source venv/bin/activate          # Windows: venv\Scripts\activate
+source venv/bin/activate         
+venv\Scripts\activate
 pip install -r requirements.txt
 
 # 3. 初始化数据库
