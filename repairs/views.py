@@ -34,7 +34,7 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
     """工单视图集"""
     
     queryset = WorkOrder.objects.select_related(
-        'user', 'repair_type', 'repairman'
+        'user', 'repairman'
     ).prefetch_related('logs', 'comment').all()
     
     permission_classes = [IsAuthenticated]
@@ -159,11 +159,6 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
             orders = self.get_queryset().filter(repairman=user)
         else:
             orders = self.get_queryset()
-        
-        page = self.paginate_queryset(orders)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
         
         serializer = self.get_serializer(orders, many=True)
         return Response(serializer.data)

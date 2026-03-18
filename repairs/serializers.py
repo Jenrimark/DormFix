@@ -50,6 +50,15 @@ class WorkOrderSerializer(serializers.ModelSerializer):
     logs = OrderLogSerializer(many=True, read_only=True)
     comment = CommentSerializer(read_only=True)
     
+    # 添加 repair_type_info 字段以兼容前端
+    repair_type_info = serializers.SerializerMethodField(read_only=True)
+    
+    def get_repair_type_info(self, obj):
+        """根据 category 返回故障类型信息"""
+        return {
+            'name': obj.get_category_display()
+        }
+    
     class Meta:
         model = WorkOrder
         fields = ['id', 'order_sn', 'user', 'user_info', 'category', 
@@ -58,7 +67,7 @@ class WorkOrderSerializer(serializers.ModelSerializer):
                   'repairman_info', 'reviewer', 'reviewer_info', 'create_time', 
                   'review_time', 'review_remark', 'accept_time', 'start_time',
                   'finish_time', 'repair_proof_img', 'repair_description', 'remark',
-                  'logs', 'comment']
+                  'logs', 'comment', 'repair_type_info']
         read_only_fields = ['id', 'order_sn', 'user', 'create_time']
 
 
