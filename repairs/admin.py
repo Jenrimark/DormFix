@@ -6,25 +6,25 @@ from .models import RepairType, WorkOrder, OrderLog, Comment
 class RepairTypeAdmin(admin.ModelAdmin):
     """故障类型管理"""
     
-    list_display = ['name', 'priority', 'created_at']
-    list_filter = ['priority']
-    search_fields = ['name']
-    ordering = ['id']
+    list_display = ['category', 'name', 'priority', 'created_at']
+    list_filter = ['category', 'priority']
+    search_fields = ['name', 'category']
+    ordering = ['category', 'priority', 'id']
 
 
 @admin.register(WorkOrder)
 class WorkOrderAdmin(admin.ModelAdmin):
     """工单管理"""
     
-    list_display = ['order_sn', 'user', 'repair_type', 'status', 'priority', 'repairman', 'create_time']
-    list_filter = ['status', 'priority', 'repair_type', 'create_time']
+    list_display = ['order_sn', 'user', 'category', 'status', 'priority', 'repairman', 'create_time']
+    list_filter = ['status', 'priority', 'category', 'create_time']
     search_fields = ['order_sn', 'user__username', 'content']
     readonly_fields = ['order_sn', 'create_time']
     ordering = ['-create_time']
     
     fieldsets = (
         ('基本信息', {
-            'fields': ('order_sn', 'user', 'repair_type', 'status', 'priority')
+            'fields': ('order_sn', 'user', 'category', 'status', 'priority')
         }),
         ('详细内容', {
             'fields': ('content', 'img_proof', 'remark')

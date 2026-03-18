@@ -7,10 +7,12 @@ class RepairTypeSerializer(serializers.ModelSerializer):
     """故障类型序列化器"""
     
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
+    category_display = serializers.CharField(source='get_category_display', read_only=True)
     
     class Meta:
         model = RepairType
-        fields = ['id', 'name', 'priority', 'priority_display', 'description', 'created_at']
+        fields = ['id', 'category', 'category_display', 'name', 'priority', 
+                  'priority_display', 'description', 'created_at']
         read_only_fields = ['id', 'created_at']
 
 
@@ -42,7 +44,7 @@ class WorkOrderSerializer(serializers.ModelSerializer):
     user_info = UserSerializer(source='user', read_only=True)
     repairman_info = UserSerializer(source='repairman', read_only=True)
     reviewer_info = UserSerializer(source='reviewer', read_only=True)
-    repair_type_info = RepairTypeSerializer(source='repair_type', read_only=True)
+    category_display = serializers.CharField(source='get_category_display', read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
     logs = OrderLogSerializer(many=True, read_only=True)
@@ -50,8 +52,8 @@ class WorkOrderSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = WorkOrder
-        fields = ['id', 'order_sn', 'user', 'user_info', 'repair_type', 
-                  'repair_type_info', 'status', 'status_display', 'priority', 
+        fields = ['id', 'order_sn', 'user', 'user_info', 'category', 
+                  'category_display', 'status', 'status_display', 'priority', 
                   'priority_display', 'content', 'img_proof', 'repairman', 
                   'repairman_info', 'reviewer', 'reviewer_info', 'create_time', 
                   'review_time', 'review_remark', 'accept_time', 'start_time',
@@ -65,7 +67,7 @@ class WorkOrderCreateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = WorkOrder
-        fields = ['repair_type', 'priority', 'content', 'img_proof']
+        fields = ['category', 'priority', 'content', 'img_proof']
     
     def create(self, validated_data):
         """创建工单并记录日志"""

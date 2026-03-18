@@ -3,68 +3,60 @@
     <h1 class="font-heading text-2xl font-bold text-textDark mb-6">提交报修工单</h1>
     <div class="bg-white rounded-xl shadow-md p-6">
       <form @submit.prevent="onSubmit" class="space-y-4">
-        <!-- 故障类型 - 两级选择 -->
+        <!-- 故障类型 - 选择类别 -->
         <div class="space-y-3">
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">故障类别 <span class="text-red-500">*</span></label>
-            <select v-model="selectedCategory" required @change="onCategoryChange" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary cursor-pointer">
-              <option value="">请选择故障类别</option>
-              <option v-for="category in categories" :key="category" :value="category">
-                {{ category }} ({{ getCategoryCount(category) }}项)
-              </option>
-            </select>
-          </div>
-          
-          <div v-if="selectedCategory" class="animate-fadeIn">
-            <label class="block text-sm font-medium text-gray-700 mb-2">具体问题 <span class="text-red-500">*</span></label>
-            <div class="grid grid-cols-1 gap-2">
+            <div class="grid grid-cols-1 gap-3">
               <label 
-                v-for="t in filteredRepairTypes" 
-                :key="t.id"
-                class="flex items-center p-3 border rounded-lg cursor-pointer transition-all hover:border-primary hover:bg-primary/5"
+                v-for="cat in categoryOptions" 
+                :key="cat.value"
+                class="flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all"
                 :class="{
-                  'border-primary bg-primary/10': form.repair_type === t.id,
-                  'border-red-200 bg-red-50': t.priority === 'high' && form.repair_type !== t.id,
-                  'border-yellow-200 bg-yellow-50': t.priority === 'medium' && form.repair_type !== t.id,
-                  'border-gray-200': t.priority === 'low' && form.repair_type !== t.id
+                  'border-primary bg-primary/5': form.category === cat.value,
+                  'border-red-200 bg-red-50': cat.priority === 'high' && form.category !== cat.value,
+                  'border-yellow-200 bg-yellow-50': cat.priority === 'medium' && form.category !== cat.value,
+                  'border-gray-200 hover:border-primary/50 hover:bg-gray-50': cat.priority === 'low' && form.category !== cat.value
                 }"
               >
                 <input 
                   type="radio" 
-                  :value="t.id" 
-                  v-model="form.repair_type"
-                  @change="onRepairTypeChange(t)"
-                  class="mr-3 w-4 h-4 text-primary cursor-pointer"
+                  :value="cat.value" 
+                  v-model="form.category"
+                  @change="onCategorySelect(cat)"
+                  class="sr-only"
                 >
-                <div class="flex-1">
-                  <div class="flex items-center gap-2">
-                    <span class="font-medium text-gray-900">{{ t.name.split(' - ')[1] || t.name }}</span>
-                    <span 
-                      v-if="t.priority === 'high'" 
-                      class="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full"
-                    >
-                      紧急
-                    </span>
-                    <span 
-                      v-else-if="t.priority === 'medium'" 
-                      class="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700 rounded-full"
-                    >
-                      一般
-                    </span>
-                    <span 
-                      v-else 
-                      class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full"
-                    >
-                      不急
-                    </span>
+                <div class="flex items-center gap-3 flex-1">
+                  <div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span class="text-xl">{{ cat.icon }}</span>
                   </div>
-                  <p v-if="t.description" class="text-xs text-gray-500 mt-1">{{ t.description }}</p>
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                      <h3 class="font-medium text-gray-900">{{ cat.label }}</h3>
+                      <span 
+                        v-if="cat.priority === 'high'" 
+                        class="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 rounded-full"
+                      >
+                        紧急
+                      </span>
+                      <span 
+                        v-else-if="cat.priority === 'medium'" 
+                        class="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-700 rounded-full"
+                      >
+                        一般
+                      </span>
+                      <span 
+                        v-else 
+                        class="px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded-full"
+                      >
+                        不急
+                      </span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">{{ cat.description }}</p>
+                  </div>
                 </div>
               </label>
             </div>
-            <p class="text-xs text-gray-500 mt-2">
-              💡 提示：紧急问题会优先处理
-            </p>
           </div>
         </div>
         
@@ -176,8 +168,6 @@ import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const userStore = useUserStore()
-const repairTypes = ref([])
-const selectedCategory = ref('')
 const autoSetPriority = ref(false)
 const loading = ref(false)
 const imagePreview = ref(null)
@@ -185,35 +175,49 @@ const imageFile = ref(null)
 const fileInput = ref(null)
 
 const form = reactive({
-  repair_type: '',
+  category: '',
   priority: 'medium',
   content: '',
 })
 
-// 计算属性：提取所有类别
-const categories = computed(() => {
-  const categorySet = new Set()
-  repairTypes.value.forEach(type => {
-    // 假设格式是 "类别 - 具体问题"
-    const parts = type.name.split(' - ')
-    if (parts.length > 1) {
-      categorySet.add(parts[0])
-    }
-  })
-  return Array.from(categorySet).sort()
-})
-
-// 计算属性：根据选中的类别过滤故障类型
-const filteredRepairTypes = computed(() => {
-  if (!selectedCategory.value) return []
-  return repairTypes.value.filter(type => 
-    type.name.startsWith(selectedCategory.value + ' - ')
-  ).sort((a, b) => {
-    // 按紧急程度排序：high > medium > low
-    const priorityOrder = { high: 0, medium: 1, low: 2 }
-    return priorityOrder[a.priority] - priorityOrder[b.priority]
-  })
-})
+// 类别选项配置
+const categoryOptions = [
+  { 
+    value: '水电', 
+    label: '水电类', 
+    icon: '💧',
+    description: '漏水、断电、照明等问题',
+    priority: 'high'
+  },
+  { 
+    value: '网络', 
+    label: '网络类', 
+    icon: '📡',
+    description: '网络故障、网口损坏等',
+    priority: 'high'
+  },
+  { 
+    value: '家具', 
+    label: '家具类', 
+    icon: '🪑',
+    description: '床、桌椅、柜子等家具问题',
+    priority: 'medium'
+  },
+  { 
+    value: '门窗', 
+    label: '门窗类', 
+    icon: '🚪',
+    description: '门锁、窗户、玻璃等问题',
+    priority: 'medium'
+  },
+  { 
+    value: '其他', 
+    label: '其他', 
+    icon: '🔧',
+    description: '其他类型的报修',
+    priority: 'low'
+  }
+]
 
 // 计算属性：优先级文本
 const priorityText = computed(() => {
@@ -221,22 +225,9 @@ const priorityText = computed(() => {
   return map[form.priority] || '一般'
 })
 
-// 获取类别下的问题数量
-function getCategoryCount(category) {
-  return repairTypes.value.filter(type => 
-    type.name.startsWith(category + ' - ')
-  ).length
-}
-
-// 类别改变时重置具体问题选择
-function onCategoryChange() {
-  form.repair_type = ''
-  autoSetPriority.value = false
-}
-
-// 选择具体问题时自动设置优先级
-function onRepairTypeChange(repairType) {
-  form.priority = repairType.priority
+// 选择类别时自动设置优先级
+function onCategorySelect(cat) {
+  form.priority = cat.priority
   autoSetPriority.value = true
   
   // 3秒后隐藏提示
@@ -249,26 +240,6 @@ onMounted(async () => {
   if (!userStore.user) {
     router.push({ name: 'Login', query: { redirect: '/submit' } })
     return
-  }
-  
-  console.log('开始加载故障类型...')
-  try {
-    const { data } = await getRepairTypes()
-    console.log('故障类型数据:', data)
-    // 处理分页数据：如果返回的是分页对象，取 results；否则直接使用
-    repairTypes.value = data.results || data
-    
-    if (!repairTypes.value || repairTypes.value.length === 0) {
-      if (typeof window.__toast === 'function') {
-        window.__toast('暂无故障类型数据，请联系管理员', 'warning')
-      }
-    }
-  } catch (error) {
-    console.error('获取故障类型失败:', error)
-    const errorMsg = error.response?.data?.detail || error.message || '获取故障类型失败'
-    if (typeof window.__toast === 'function') {
-      window.__toast(errorMsg, 'error')
-    }
   }
 })
 
@@ -310,7 +281,7 @@ async function onSubmit() {
   loading.value = true
   try {
     const formData = new FormData()
-    formData.append('repair_type', Number(form.repair_type))
+    formData.append('category', form.category)
     formData.append('priority', form.priority)
     formData.append('content', form.content.trim())
     

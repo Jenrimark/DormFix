@@ -16,11 +16,27 @@ class RepairType(models.Model):
         ('high', '高'),
     )
     
+    CATEGORY_CHOICES = (
+        ('水电', '水电'),
+        ('家具', '家具'),
+        ('门窗', '门窗'),
+        ('网络', '网络'),
+        ('电器', '电器'),
+        ('其他', '其他'),
+    )
+    
+    category = models.CharField(
+        verbose_name='故障类别',
+        max_length=20,
+        choices=CATEGORY_CHOICES,
+        default='其他',
+        help_text='一级分类：水电、家具、门窗、网络等'
+    )
+    
     name = models.CharField(
-        verbose_name='类型名称',
+        verbose_name='具体问题',
         max_length=50,
-        unique=True,
-        help_text='例如：水电类、家具类、门窗类、网络类'
+        help_text='例如：水龙头漏水、灯泡不亮、桌椅损坏'
     )
     
     priority = models.CharField(
@@ -47,10 +63,11 @@ class RepairType(models.Model):
         db_table = 'repair_types'
         verbose_name = '故障类型'
         verbose_name_plural = verbose_name
-        ordering = ['id']
+        ordering = ['category', 'priority', 'id']
+        unique_together = [['category', 'name']]
     
     def __str__(self):
-        return f"{self.name} ({self.get_priority_display()})"
+        return f"{self.category} - {self.name}"
 
 
 class WorkOrder(models.Model):
@@ -72,6 +89,15 @@ class WorkOrder(models.Model):
         ('high', '紧急'),
     )
     
+    CATEGORY_CHOICES = (
+        ('水电', '水电'),
+        ('家具', '家具'),
+        ('门窗', '门窗'),
+        ('网络', '网络'),
+        ('电器', '电器'),
+        ('其他', '其他'),
+    )
+    
     order_sn = models.CharField(
         verbose_name='工单编号',
         max_length=50,
@@ -87,11 +113,11 @@ class WorkOrder(models.Model):
         help_text='关联学生用户'
     )
     
-    repair_type = models.ForeignKey(
-        RepairType,
-        on_delete=models.PROTECT,
-        related_name='work_orders',
-        verbose_name='故障类型'
+    category = models.CharField(
+        verbose_name='故障类别',
+        max_length=20,
+        choices=CATEGORY_CHOICES,
+        help_text='水电、家具、门窗、网络、电器、其他'
     )
     
     status = models.IntegerField(

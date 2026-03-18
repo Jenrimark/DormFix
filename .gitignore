@@ -149,3 +149,5 @@ temp/
 *.exe
 *.o
 *.so
+thesis/
+*.zip

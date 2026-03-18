@@ -83,7 +83,7 @@ python manage.py createsuperuser
 # 5. 启动后端
 ./start_backend.sh
 # 或
-python manage.py runserver
+python3 manage.py runserver
 
 # 6. 前端设置（新终端）
 cd frontend-vue
