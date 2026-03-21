@@ -18,8 +18,9 @@ export default {
         'fluorescent-cyan': '#22D3EE',
       },
       fontFamily: {
-        heading: ['Inter', 'Fira Code', 'monospace'],
-        body: ['Inter', 'Fira Sans', 'sans-serif'],
+        heading: ['Fira Sans', 'Inter', 'sans-serif'],
+        body: ['Fira Sans', 'Inter', 'sans-serif'],
+        mono: ['Fira Code', 'monospace'],
       },
       animation: {
         'aurora': 'aurora 20s ease-in-out infinite',

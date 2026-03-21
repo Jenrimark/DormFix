@@ -190,11 +190,11 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-        # 直接查询所有待派单工单，不使用 get_queryset()
-        # 这样维修员可以看到所有待派单工单，而不仅仅是分配给自己的
+        # 查询已审核通过但未分配维修人员的工单
+        # status=1（已派单）且 repairman=None（未分配维修人员）
         orders = WorkOrder.objects.select_related(
-            'user', 'repair_type', 'repairman'
-        ).filter(status=1)
+            'user', 'repairman'
+        ).filter(status=1, repairman__isnull=True)
         
         # 按紧急程度和提交时间排序（紧急的优先，同等紧急度按时间倒序）
         priority_order = {'high': 0, 'medium': 1, 'low': 2}
@@ -581,17 +581,21 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
             'cancelled': queryset.filter(status=4).count(),
         }
         
-        # 计算平均响应时间（从提交到派单的时间）
-        completed_orders = queryset.filter(status=3, finish_time__isnull=False)
-        if completed_orders.exists():
+        # 计算平均响应时间（从提交到接单的时间，单位：小时）
+        # 只统计已接单的工单（accept_time 不为空）
+        accepted_orders = queryset.filter(accept_time__isnull=False)
+        if accepted_orders.exists():
             total_hours = 0
             count = 0
-            for order in completed_orders:
-                if order.finish_time:
-                    delta = order.finish_time - order.create_time
-                    total_hours += delta.total_seconds() / 3600
+            for order in accepted_orders:
+                # 计算从创建到接单的时间差
+                delta = order.accept_time - order.create_time
+                hours = delta.total_seconds() / 3600
+                # 只统计正数（防止数据异常）
+                if hours >= 0:
+                    total_hours += hours
                     count += 1
-            stats['avg_response_time'] = round(total_hours / count, 2) if count > 0 else 0
+            stats['avg_response_time'] = round(total_hours / count, 1) if count > 0 else 0
         else:
             stats['avg_response_time'] = 0
         
@@ -608,7 +612,7 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
             )
         
         distribution = WorkOrder.objects.values(
-            'repair_type__name'
+            'category'
         ).annotate(
             count=Count('id')
         ).order_by('-count')
@@ -655,7 +659,7 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def repairman_performance(self, request):
-        """维修员绩效数据（管理员）"""
+        """维修员绩效数据（管理员）- 基于真实数据计算"""
         if not request.user.is_admin():
             return Response(
                 {'error': '权限不足'},
@@ -663,24 +667,90 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
             )
         
         from accounts.models import User
+        from django.db.models import Avg
+        import logging
+        logger = logging.getLogger(__name__)
         
         # 获取所有维修员
-        repairmen = User.objects.filter(role=2)[:2]  # 取前2个维修员
+        repairmen = User.objects.filter(role=2)
+        logger.info(f'找到 {repairmen.count()} 个维修员')
         
         performance_data = []
         for repairman in repairmen:
             orders = WorkOrder.objects.filter(repairman=repairman)
             completed_orders = orders.filter(status=3)
+            total_orders = orders.count()
             
-            # 计算各项指标（模拟数据，实际应根据业务逻辑计算）
+            logger.info(f'{repairman.username}: 总工单={total_orders}, 已完成={completed_orders.count()}')
+            
+            # 即使没有工单也显示，给默认分数
+            if total_orders == 0:
+                performance_data.append({
+                    'name': repairman.username,
+                    'response_speed': 50.0,
+                    'quality': 50.0,
+                    'quantity': 50.0,
+                    'rating': 50.0,
+                    'punctuality': 50.0
+                })
+                continue
+            
+            # 1. 响应速度：平均接单时间（小时）转换为分数（越快越高，50-100分）
+            accepted_orders = orders.filter(accept_time__isnull=False)
+            if accepted_orders.exists():
+                total_response_hours = 0
+                for order in accepted_orders:
+                    delta = order.accept_time - order.create_time
+                    hours = delta.total_seconds() / 3600
+                    if hours >= 0:  # 只统计正数
+                        total_response_hours += hours
+                avg_response_hours = total_response_hours / accepted_orders.count()
+                # 24小时内=100分，48小时=50分
+                response_speed = max(50, min(100, 100 - (avg_response_hours / 48 * 50)))
+            else:
+                response_speed = 50
+            
+            # 2. 维修质量：基于用户评分（1-5星转换为 50-100 分）
+            comments = Comment.objects.filter(work_order__repairman=repairman)
+            if comments.exists():
+                avg_score = comments.aggregate(Avg('score'))['score__avg']
+                quality = 50 + ((avg_score / 5) * 50) if avg_score else 50
+            else:
+                quality = 50
+            
+            # 3. 工单数量：完成的工单数量（归一化到 50-100）
+            # 10个工单为满分
+            quantity = 50 + min(50, (completed_orders.count() / 10) * 50)
+            
+            # 4. 用户评分：直接使用评分转换（50-100分）
+            rating = quality
+            
+            # 5. 准时率：在预期时间内完成的比例（50-100分）
+            # 从接单到完工 48 小时内为准时
+            finished_orders = completed_orders.filter(
+                accept_time__isnull=False,
+                finish_time__isnull=False
+            )
+            if finished_orders.exists():
+                on_time_count = 0
+                for order in finished_orders:
+                    delta = order.finish_time - order.accept_time
+                    if delta.total_seconds() / 3600 <= 48:
+                        on_time_count += 1
+                punctuality = 50 + ((on_time_count / finished_orders.count()) * 50)
+            else:
+                punctuality = 50
+            
             performance_data.append({
                 'name': repairman.username,
-                'response_speed': min(95, 80 + completed_orders.count()),
-                'quality': min(95, 85 + completed_orders.count() // 2),
-                'quantity': min(95, 75 + completed_orders.count()),
-                'rating': min(95, 88 + completed_orders.count() // 3),
-                'punctuality': min(95, 82 + completed_orders.count() // 2)
+                'response_speed': round(response_speed, 1),
+                'quality': round(quality, 1),
+                'quantity': round(quantity, 1),
+                'rating': round(rating, 1),
+                'punctuality': round(punctuality, 1)
             })
+            
+            logger.info(f'{repairman.username} 绩效: 响应={response_speed:.1f}, 质量={quality:.1f}, 数量={quantity:.1f}, 评分={rating:.1f}, 准时={punctuality:.1f}')
         
         return Response(performance_data)
     

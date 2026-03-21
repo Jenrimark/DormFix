@@ -86,6 +86,8 @@ export const assignOrder = (id, repairmanId) => api.post(`/repairs/work-orders/$
 export const updateOrderStatus = (id, status, remark) => api.post(`/repairs/work-orders/${id}/update_status/`, { status, remark })
 export const getStatistics = () => api.get('/repairs/work-orders/statistics/')
 export const getTypeDistribution = () => api.get('/repairs/work-orders/type_distribution/')
+export const getTrendData = () => api.get('/repairs/work-orders/trend_data/')
+export const getRepairmanPerformance = () => api.get('/repairs/work-orders/repairman_performance/')
 
 // 评价
 export const createComment = (data) => api.post('/repairs/comments/', data)

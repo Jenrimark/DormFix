@@ -52,7 +52,7 @@ python manage.py createsuperuser
 # 按提示输入用户名、邮箱（可选）、密码
 
 # 5. 启动后端服务
-python manage.py runserver
+python3 manage.py runserver
 
 # 6. 前端设置（新开一个终端）
 cd frontend-vue
