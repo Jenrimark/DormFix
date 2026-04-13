@@ -94,6 +94,7 @@ Desktop.ini
 # ============================================
 README/
 文档材料/
+DormFix文档材料/
 
 # 保留根目录的 README.md
 !README.md
@@ -110,6 +111,7 @@ README/
 .env.*.local
 .env.development
 .env.production
+*.local
 *.pem
 *.key
 secrets.json
