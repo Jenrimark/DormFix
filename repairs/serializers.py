@@ -1,4 +1,6 @@
 from rest_framework import serializers
+from django.core.exceptions import ObjectDoesNotExist
+
 from .models import RepairType, WorkOrder, OrderLog, Comment
 from accounts.serializers import UserSerializer
 
@@ -37,6 +39,38 @@ class CommentSerializer(serializers.ModelSerializer):
         fields = ['id', 'work_order', 'score', 'feedback', 'create_time']
         read_only_fields = ['id', 'create_time']
 
+    def validate(self, attrs):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
+
+        work_order = attrs.get('work_order')
+        score = attrs.get('score')
+
+        if work_order is None:
+            raise serializers.ValidationError({'work_order': '请选择要评价的工单'})
+
+        # 仅学生可评价，且只能评价自己的工单
+        if not user or not user.is_authenticated:
+            raise serializers.ValidationError('未登录')
+        if not user.is_student():
+            raise serializers.ValidationError('只有学生可以评价')
+        if work_order.user_id != user.id:
+            raise serializers.ValidationError({'work_order': '只能评价自己的工单'})
+
+        # 仅已完成工单可评价
+        if work_order.status != 3:
+            raise serializers.ValidationError({'work_order': '只有已完成工单可以评价'})
+
+        # 每工单最多评价一次（OneToOne 再加业务校验，返回更友好错误）
+        if hasattr(work_order, 'comment'):
+            raise serializers.ValidationError({'work_order': '该工单已评价，不能重复提交'})
+
+        # 评分范围兜底（模型 choices 已约束，但这里给明确错误）
+        if score is None or not (1 <= int(score) <= 5):
+            raise serializers.ValidationError({'score': '评分必须在 1-5 之间'})
+
+        return attrs
+
 
 class WorkOrderSerializer(serializers.ModelSerializer):
     """工单序列化器"""
@@ -48,7 +82,9 @@ class WorkOrderSerializer(serializers.ModelSerializer):
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
     logs = OrderLogSerializer(many=True, read_only=True)
-    comment = CommentSerializer(read_only=True)
+    # 反向 OneToOne：当尚未评价时，直接访问 obj.comment 会抛 RelatedObjectDoesNotExist。
+    # 用方法字段保证列表/详情序列化稳定返回 null。
+    comment = serializers.SerializerMethodField(read_only=True)
     
     # 添加 repair_type_info 字段以兼容前端
     repair_type_info = serializers.SerializerMethodField(read_only=True)
@@ -58,6 +94,13 @@ class WorkOrderSerializer(serializers.ModelSerializer):
         return {
             'name': obj.get_category_display()
         }
+
+    def get_comment(self, obj):
+        try:
+            comment = obj.comment
+        except ObjectDoesNotExist:
+            return None
+        return CommentSerializer(comment).data
     
     class Meta:
         model = WorkOrder

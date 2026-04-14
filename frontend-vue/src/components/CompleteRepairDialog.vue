@@ -39,8 +39,10 @@
             <label class="block text-sm font-medium text-gray-700 mb-2">
               维修凭证照片 <span class="text-gray-400">(选填)</span>
             </label>
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-primary transition-colors cursor-pointer"
-              @click="$refs.fileInput.click()">
+            <div
+              class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-primary transition-colors cursor-pointer"
+              @click="triggerFileSelect"
+            >
               <input ref="fileInput" type="file" accept="image/*" 
                 @change="handleFileChange" class="hidden">
               
@@ -146,6 +148,10 @@ const clearFile = () => {
   if (fileInput.value) {
     fileInput.value.value = ''
   }
+}
+
+const triggerFileSelect = () => {
+  fileInput.value?.click()
 }
 
 const handleSubmit = async () => {

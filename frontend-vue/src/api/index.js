@@ -92,6 +92,16 @@ export const getRepairmanPerformance = () => api.get('/repairs/work-orders/repai
 // 评价
 export const createComment = (data) => api.post('/repairs/comments/', data)
 
+// 系统反馈
+export const createFeedback = (data) => api.post('/feedbacks/', data)
+export const getMyFeedbacks = (params) => api.get('/feedbacks/my/', { params })
+export const getFeedbacks = (params) => api.get('/feedbacks/', { params })
+export const handleFeedback = (id, data) => api.post(`/feedbacks/${id}/handle/`, data)
+
+// 站内通知
+export const getUnreadNotificationCount = () => api.get('/notifications/unread_count/')
+export const markAllNotificationsRead = () => api.post('/notifications/mark_all_read/')
+
 // 用户管理（管理员）
 export const listAllUsers = (params) => api.get('/accounts/users/list_all/', { params })
 export const createUser = (data) => api.post('/accounts/users/create_user/', data)

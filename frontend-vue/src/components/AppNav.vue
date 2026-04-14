@@ -13,6 +13,17 @@
           <router-link to="/" class="text-gray-600 hover:text-primary transition-colors duration-200">首页</router-link>
           
           <template v-if="userStore.isLoggedIn">
+            <template v-if="userStore.user?.role !== 3">
+              <router-link to="/feedback" class="text-gray-600 hover:text-primary transition-colors relative pr-3">
+                反馈
+                <span
+                  v-if="unreadCount > 0"
+                  class="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] leading-[18px] rounded-full text-center"
+                >
+                  {{ unreadCount > 99 ? '99+' : unreadCount }}
+                </span>
+              </router-link>
+            </template>
             <!-- 学生：显示"提交报修"、"我的工单" -->
             <template v-if="userStore.user?.role === 1">
               <router-link to="/submit" class="text-gray-600 hover:text-primary transition-colors">提交报修</router-link>
@@ -33,6 +44,7 @@
               <router-link to="/admin/announcements" class="text-gray-600 hover:text-primary transition-colors">公告管理</router-link>
               <router-link to="/admin/users" class="text-gray-600 hover:text-primary transition-colors">用户管理</router-link>
               <router-link to="/admin/logs" class="text-gray-600 hover:text-primary transition-colors">用户日志</router-link>
+              <router-link to="/admin/feedbacks" class="text-gray-600 hover:text-primary transition-colors">反馈管理</router-link>
             </template>
             
             <router-link to="/profile" class="text-gray-600 hover:text-primary transition-colors">个人中心</router-link>
@@ -49,14 +61,47 @@
 </template>
 
 <script setup>
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
+import { getUnreadNotificationCount } from '@/api'
 
 const userStore = useUserStore()
 const router = useRouter()
+
+const unreadCount = ref(0)
+let timer = null
 
 async function handleLogout() {
   await userStore.logout()
   router.push('/')
 }
+
+async function refreshUnread() {
+  if (!userStore.isLoggedIn) {
+    unreadCount.value = 0
+    return
+  }
+  try {
+    const { data } = await getUnreadNotificationCount()
+    unreadCount.value = data?.count ?? 0
+  } catch {
+    // 忽略错误，避免打扰用户
+  }
+}
+
+watch(
+  () => userStore.isLoggedIn,
+  () => refreshUnread(),
+  { immediate: true }
+)
+
+onMounted(() => {
+  refreshUnread()
+  timer = setInterval(refreshUnread, 30000)
+})
+
+onBeforeUnmount(() => {
+  if (timer) clearInterval(timer)
+})
 </script>

@@ -17,11 +17,29 @@ const routes = [
     component: () => import('@/views/OrderTrackingView.vue'),
     meta: { requiresAuth: true, roles: [1, 2, 3] } // 所有角色可访问
   },
+  {
+    path: '/feedback',
+    name: 'FeedbackSubmit',
+    component: () => import('@/views/FeedbackSubmitView.vue'),
+    meta: { requiresAuth: true, roles: [1, 2, 3] }
+  },
+  {
+    path: '/my-feedbacks',
+    name: 'MyFeedbacks',
+    redirect: '/feedback?tab=records',
+    meta: { requiresAuth: true, roles: [1, 2, 3] }
+  },
   { 
     path: '/admin', 
     name: 'AdminDashboard', 
     component: () => import('@/views/AdminDashboardView.vue'),
     meta: { requiresAuth: true, roles: [3] } // 仅管理员可访问
+  },
+  {
+    path: '/admin/feedbacks',
+    name: 'AdminFeedbacks',
+    component: () => import('@/views/AdminFeedbacksView.vue'),
+    meta: { requiresAuth: true, roles: [3] }
   },
   { 
     path: '/admin/users', 

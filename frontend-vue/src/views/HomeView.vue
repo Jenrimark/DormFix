@@ -419,6 +419,7 @@ onMounted(() => {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   display: inline-block;
+  height: 97px;
   background-size: 200% 200%;
   animation: gradient-shift 3s ease infinite;
 }

@@ -790,12 +790,19 @@ class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.select_related('work_order').all()
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [IsAuthenticated(), IsStudent()]
+        return super().get_permissions()
     
     def get_queryset(self):
-        """学生只能看到自己工单的评价"""
+        """按角色过滤评价可见范围"""
         user = self.request.user
         if user.is_student():
             return self.queryset.filter(work_order__user=user)
+        if user.is_repairman():
+            return self.queryset.filter(work_order__repairman=user)
         return self.queryset
     
     def perform_create(self, serializer):
