@@ -1,6 +1,6 @@
 # DormFix — 宿舍报修工单管理系统
 
-> 基于 Django REST Framework + Vue 3 的前后端分离宿舍报修平台，支持学生提交报修、维修员接单处理、管理员审核派单与数据可视化统计。
+> 基于 Django REST Framework + Vue 3 的前后端分离宿舍报修平台，支持学生提交报修、维修员接单处理、管理员审核派单、系统反馈与 AI 知识问答。
 
 ---
 
@@ -62,6 +62,7 @@ DormFix 针对高校宿舍报修流程中信息不透明、流转不规范、进
 | Vue Router | ^4.2.5 | 前端路由，基于角色跳转 |
 | Pinia | ^2.1.7 | 全局状态管理 |
 | pinia-plugin-persistedstate | ^3.2.3 | 状态持久化（刷新不丢失登录态） |
+| marked | ^16.x | AI 回答 Markdown 渲染 |
 | Tailwind CSS | ^3.4.0 | 原子化样式 |
 | Axios | ^1.6.2 | HTTP 请求封装 |
 | Chart.js + vue-chartjs | ^4.5.1 | 数据可视化图表 |
@@ -85,6 +86,27 @@ DormFix 针对高校宿舍报修流程中信息不透明、流转不规范、进
          [已完成 status=3]
 ```
 
+### 评价系统
+
+- 学生可对**已完成工单**提交 1-5 星评价与文字反馈
+- 每个工单仅允许评价一次，防止重复提交
+- 评价结果用于维修质量追踪与管理员绩效分析
+- 评价信息在工单详情中可直接查看（学生端与维修员端）
+
+### 反馈系统（系统反馈 + 回复通知）
+
+- 用户可提交系统反馈（功能建议/使用问题/投诉/其他）
+- 管理员在后台统一处理反馈（状态流转 + 回复）
+- 用户可在“反馈记录”查看处理进度和管理员回复
+- 管理员回复后自动触发站内通知与红点提示，避免漏看
+
+### AI 知识问答
+
+- 学生与维修员可通过聊天式界面提问（支持流式输出）
+- 回答优先结合管理员维护的文字知识库（FAQ/SOP/规则）
+- 当知识库覆盖不足时，AI 会给出通用建议并提示以规则为准
+- 管理员可维护知识条目并查看问答日志，持续优化回答质量
+
 ### 三类角色功能
 
 **学生端**
@@ -93,12 +115,14 @@ DormFix 针对高校宿舍报修流程中信息不透明、流转不规范、进
 - 实时查看工单进度（状态、维修员信息、时间线）
 - 工单完成后提交星级评价与文字反馈
 - 在待审核/已派单阶段可主动取消工单
+- AI 知识问答（聊天式界面，支持流式输出）
 
 **维修员端**
 - 查看接单池（所有 status=1 且未被接取的工单）
 - 主动接单，系统记录接单时间
 - 开始维修，系统记录开始时间
 - 完成维修，上传维修凭证图片或填写维修说明
+- AI 知识问答（结合管理员录入规则/FAQ）
 
 **管理员端**
 - 工单审核（通过/拒绝，拒绝必须填写原因）
@@ -106,13 +130,15 @@ DormFix 针对高校宿舍报修流程中信息不透明、流转不规范、进
 - 用户管理（创建/编辑/删除/启用/禁用/重置密码/批量操作）
 - 数据仪表盘（工单统计、故障类型分布、趋势折线图、维修员绩效雷达图）
 - 系统公告发布与管理
+- 反馈管理（处理系统反馈、回复用户、更新状态）
 - 操作日志查看（支持按操作人、操作类型、时间范围筛选）
+- 知识库管理（纯文字录入 FAQ / SOP / 规则，按角色控制可见范围）
 
 ---
 
 ## 数据库设计
 
-系统共 5 张核心业务表：
+系统包含报修主流程、反馈通知和知识问答等核心数据表，主要包括：
 
 | 表名 | 说明 |
 |------|------|
@@ -121,6 +147,8 @@ DormFix 针对高校宿舍报修流程中信息不透明、流转不规范、进
 | `order_logs` | 工单操作日志，记录每次状态变更的操作人与备注 |
 | `stored_files` | 图片二进制存储表，存 filename、mime_type、content |
 | `operation_logs` | 系统操作审计日志，记录用户管理等关键操作 |
+| `knowledge_items` | 知识条目表（FAQ/SOP/规则，支持按角色可见） |
+| `qa_logs` | 知识问答日志（问题、回答、成功状态、错误信息） |
 
 ---
 
@@ -140,6 +168,9 @@ DormFix/
 │   ├── views.py            # 工单 CRUD、审核、派单、接单、完工、统计
 │   └── storage_db.py       # 自定义数据库文件存储后端
 ├── announcements/          # 公告模块
+├── feedbacks/              # 系统反馈模块
+├── notifications/          # 站内通知模块
+├── knowledge_base/         # AI知识问答与知识库管理
 ├── frontend-vue/           # Vue 3 前端
 │   ├── src/views/          # 各角色页面（登录、提交报修、仪表盘等）
 │   ├── src/components/     # 通用组件（图表、对话框、通知等）
@@ -206,8 +237,10 @@ DB_PORT=3306
 
 # 知识问答（大模型）
 LLM_API_KEY=
-LLM_BASE_URL=https://api.openai.com/v1
-LLM_MODEL=gpt-4o-mini
+# OpenAI: https://api.openai.com/v1
+# 阿里 DashScope(OpenAI兼容): https://dashscope.aliyuncs.com/compatible-mode/v1
+LLM_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+LLM_MODEL=qwen-plus
 LLM_TIMEOUT_SECONDS=30
 ```
 
@@ -235,22 +268,22 @@ npm run dev
 
 | 模块 | 接口 | 说明 |
 |------|------|------|
-| 认证 | `POST /api/users/register/` | 用户注册 |
-| 认证 | `POST /api/users/login/` | 用户登录 |
-| 认证 | `POST /api/users/logout/` | 用户登出 |
-| 工单 | `POST /api/work-orders/` | 提交报修工单 |
-| 工单 | `GET /api/work-orders/my_orders/` | 学生查看自己的工单 |
-| 工单 | `POST /api/work-orders/{id}/review/` | 管理员审核工单 |
-| 工单 | `POST /api/work-orders/{id}/assign/` | 管理员派单 |
-| 工单 | `POST /api/work-orders/{id}/accept/` | 维修员接单 |
-| 工单 | `POST /api/work-orders/{id}/start_repair/` | 维修员开始维修 |
-| 工单 | `POST /api/work-orders/{id}/complete_repair/` | 维修员完成维修 |
-| 统计 | `GET /api/work-orders/statistics/` | 工单统计数据 |
-| 统计 | `GET /api/work-orders/repairman_performance/` | 维修员绩效 |
-| 用户 | `POST /api/users/{id}/toggle_status/` | 启用/禁用用户 |
-| 用户 | `POST /api/users/batch_operation/` | 批量操作用户 |
-| 日志 | `GET /api/operation-logs/` | 操作审计日志 |
-| 公告 | `GET /api/announcements/latest/` | 最新公告（公开） |
+| 认证 | `POST /api/accounts/users/register/` | 用户注册 |
+| 认证 | `POST /api/accounts/users/login/` | 用户登录 |
+| 认证 | `POST /api/accounts/users/logout/` | 用户登出 |
+| 工单 | `POST /api/repairs/work-orders/` | 提交报修工单 |
+| 工单 | `GET /api/repairs/work-orders/my_orders/` | 查看我的工单 |
+| 工单 | `POST /api/repairs/work-orders/{id}/review/` | 管理员审核工单 |
+| 工单 | `POST /api/repairs/work-orders/{id}/assign/` | 管理员派单 |
+| 工单 | `POST /api/repairs/work-orders/{id}/accept/` | 维修员接单 |
+| 工单 | `POST /api/repairs/work-orders/{id}/start_repair/` | 维修员开始维修 |
+| 工单 | `POST /api/repairs/work-orders/{id}/complete_repair/` | 维修员完成维修 |
+| 反馈 | `POST /api/feedbacks/` | 提交系统反馈 |
+| 反馈 | `GET /api/feedbacks/my/` | 查看我的反馈 |
+| 知识问答 | `POST /api/knowledge/ask/` | 非流式问答 |
+| 知识问答 | `POST /api/knowledge/ask_stream/` | 流式问答（SSE） |
+| 知识库 | `GET/POST/PUT/DELETE /api/knowledge/` | 管理员维护文字知识条目 |
+| 公告 | `GET /api/announcements/latest/` | 最新公告 |
 
 ---
 
