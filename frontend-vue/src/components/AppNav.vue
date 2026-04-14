@@ -28,12 +28,14 @@
             <template v-if="userStore.user?.role === 1">
               <router-link to="/submit" class="text-gray-600 hover:text-primary transition-colors">提交报修</router-link>
               <router-link to="/orders" class="text-gray-600 hover:text-primary transition-colors">我的工单</router-link>
+              <router-link to="/knowledge-qa" class="text-gray-600 hover:text-primary transition-colors">知识问答</router-link>
             </template>
             
             <!-- 维修人员：显示"接单池"、"我的工单"，隐藏"提交报修" -->
             <template v-if="userStore.user?.role === 2">
               <router-link to="/repairman/accept" class="text-gray-600 hover:text-primary transition-colors">接单池</router-link>
               <router-link to="/repairman/orders" class="text-gray-600 hover:text-primary transition-colors">我的工单</router-link>
+              <router-link to="/knowledge-qa" class="text-gray-600 hover:text-primary transition-colors">知识问答</router-link>
             </template>
             
             <!-- 管理员：显示"管理仪表盘"、"工单审核"、"工单管理"、"公告管理"、"用户管理"、"用户日志"，隐藏"提交报修" -->
@@ -45,6 +47,7 @@
               <router-link to="/admin/users" class="text-gray-600 hover:text-primary transition-colors">用户管理</router-link>
               <router-link to="/admin/logs" class="text-gray-600 hover:text-primary transition-colors">用户日志</router-link>
               <router-link to="/admin/feedbacks" class="text-gray-600 hover:text-primary transition-colors">反馈管理</router-link>
+              <router-link to="/admin/knowledge" class="text-gray-600 hover:text-primary transition-colors">知识库管理</router-link>
             </template>
             
             <router-link to="/profile" class="text-gray-600 hover:text-primary transition-colors">个人中心</router-link>

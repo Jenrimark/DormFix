@@ -41,13 +41,16 @@ api.interceptors.response.use(
           console.error('服务器错误:', message)
           alert('服务器错误，请稍后重试')
           break
+        case 503:
+          // 服务暂时不可用
+          console.error('服务暂不可用:', message)
+          break
         default:
           console.error('请求错误:', message)
       }
     } else if (error.request) {
       // 请求已发送但没有收到响应
-      console.error('网络错误，请检查网络连接')
-      alert('网络错误，请检查网络连接')
+      console.error('请求超时或网络异常，请检查后端/网络连接')
     } else {
       // 请求配置出错
       console.error('请求配置错误:', error.message)
@@ -101,6 +104,23 @@ export const handleFeedback = (id, data) => api.post(`/feedbacks/${id}/handle/`,
 // 站内通知
 export const getUnreadNotificationCount = () => api.get('/notifications/unread_count/')
 export const markAllNotificationsRead = () => api.post('/notifications/mark_all_read/')
+
+// 知识问答
+export const askKnowledge = (question) => api.post('/knowledge/ask/', { question }, { timeout: 60000 })
+export const getKnowledgeItems = (params) => api.get('/knowledge/', { params })
+export const createKnowledgeItem = (data) => api.post('/knowledge/', data)
+export const updateKnowledgeItem = (id, data) => api.put(`/knowledge/${id}/`, data)
+export const deleteKnowledgeItem = (id) => api.delete(`/knowledge/${id}/`)
+export const getKnowledgeQaLogs = (params) => api.get('/knowledge/qa_logs/', { params })
+export const getKnowledgeDocuments = (params) => api.get('/knowledge-documents/', { params })
+export const createKnowledgeDocument = (formData) => api.post('/knowledge-documents/', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+})
+export const updateKnowledgeDocument = (id, formData) => api.put(`/knowledge-documents/${id}/`, formData, {
+  headers: { 'Content-Type': 'multipart/form-data' }
+})
+export const deleteKnowledgeDocument = (id) => api.delete(`/knowledge-documents/${id}/`)
+export const reparseKnowledgeDocument = (id) => api.post(`/knowledge-documents/${id}/reparse/`)
 
 // 用户管理（管理员）
 export const listAllUsers = (params) => api.get('/accounts/users/list_all/', { params })

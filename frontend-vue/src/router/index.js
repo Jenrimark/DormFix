@@ -29,6 +29,12 @@ const routes = [
     redirect: '/feedback?tab=records',
     meta: { requiresAuth: true, roles: [1, 2, 3] }
   },
+  {
+    path: '/knowledge-qa',
+    name: 'KnowledgeQA',
+    component: () => import('@/views/KnowledgeQAView.vue'),
+    meta: { requiresAuth: true, roles: [1, 2] }
+  },
   { 
     path: '/admin', 
     name: 'AdminDashboard', 
@@ -39,6 +45,12 @@ const routes = [
     path: '/admin/feedbacks',
     name: 'AdminFeedbacks',
     component: () => import('@/views/AdminFeedbacksView.vue'),
+    meta: { requiresAuth: true, roles: [3] }
+  },
+  {
+    path: '/admin/knowledge',
+    name: 'AdminKnowledgeBase',
+    component: () => import('@/views/AdminKnowledgeBaseView.vue'),
     meta: { requiresAuth: true, roles: [3] }
   },
   { 

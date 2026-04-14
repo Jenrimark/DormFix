@@ -19,12 +19,19 @@ LOGS_DIR.mkdir(exist_ok=True)
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-yo$qinxz)#1@_3ap$y-bfvm=tytkh%1n#e)!&fv6#i#p0u*5c7'
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-yo$qinxz)#1@_3ap$y-bfvm=tytkh%1n#e)!&fv6#i#p0u*5c7'
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').strip().lower() in ['1', 'true', 'yes', 'on']
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',')
+    if host.strip()
+]
 
 
 # Application definition
@@ -48,6 +55,7 @@ INSTALLED_APPS = [
     'announcements',
     'feedbacks',
     'notifications',
+    'knowledge_base',
 ]
 
 MIDDLEWARE = [

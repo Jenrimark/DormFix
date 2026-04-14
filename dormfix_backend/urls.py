@@ -27,6 +27,7 @@ urlpatterns = [
     path('api/', include('feedbacks.urls')),
     path('api/', include('notifications.urls')),
     path('api/', include('announcements.urls')),
+    path('api/', include('knowledge_base.urls')),
     path('api-auth/', include('rest_framework.urls')),
     # 上传文件存数据库，通过此视图从 DB 读出并返回
     path('media/db/<int:pk>/', serve_db_file, name='serve_db_file'),

@@ -181,19 +181,37 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-### 数据库切换（可选）
+### 环境变量配置（统一放 `.env`）
 
-默认使用 SQLite，开箱即用。切换 MySQL 只需在项目根目录创建 `.env`：
+项目所有运行配置统一从根目录 `.env` 读取。可先复制模板：
+
+```bash
+cp .env.example .env
+```
+
+常用配置说明：
 
 ```env
-DB_PASSWORD=你的MySQL密码
+# Django 基础
+DJANGO_SECRET_KEY=replace-with-your-secret-key
+DJANGO_DEBUG=True
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+
+# 数据库（DB_PASSWORD 为空则用 SQLite）
+DB_PASSWORD=
 DB_NAME=DormFix
 DB_USER=root
 DB_HOST=localhost
 DB_PORT=3306
+
+# 知识问答（大模型）
+LLM_API_KEY=
+LLM_BASE_URL=https://api.openai.com/v1
+LLM_MODEL=gpt-4o-mini
+LLM_TIMEOUT_SECONDS=30
 ```
 
-系统检测到 `DB_PASSWORD` 非空时自动切换为 MySQL。
+数据库切换规则：`DB_PASSWORD` 非空时自动切换为 MySQL，否则使用 SQLite。
 
 ### 前端
 
