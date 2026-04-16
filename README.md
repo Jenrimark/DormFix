@@ -205,6 +205,9 @@ pip install -r requirements.txt
 # 数据库迁移
 python manage.py migrate
 
+# （可选）生成演示数据：基于内置 9 个账号自动造全流程数据
+python manage.py seed_demo_data
+
 # 创建管理员账号
 python manage.py createsuperuser
 
@@ -253,6 +256,26 @@ cd frontend-vue
 npm install
 npm run dev
 ```
+
+### 内置账号与演示数据说明
+
+系统预置了 9 个账号，并提供一键生成演示数据的命令，方便测试与答辩演示：
+
+- 管理员：`admin`
+- 维修员：`repairman1`、`repairman2`、`repairman3`
+- 学生：`student1`、`student2`、`student3`、`student4`、`student5`
+
+执行 `python manage.py seed_demo_data` 后，会自动生成：
+
+- 工单：`30` 条（每个学生 6 条，覆盖：待审核 / 已派单 / 维修中 / 已完成已评价 / 已完成未评价 / 已取消）
+- 评价：`5` 条（部分已完成工单带评价与评价日志）
+- 系统反馈：`15` 条（覆盖新提交 / 处理中 / 已解决等状态）
+- 通知：`10` 条（管理员回复反馈后触发的站内通知与红点数据）
+- 知识条目：`12` 条（FAQ / 维修SOP / 规则，带“【演示】”前缀）
+- 公告：`4` 条（演示用系统公告）
+- 问答日志：`8` 条（学生/维修员的历史提问与回答）
+
+> 说明：`seed_demo_data` 只使用上述 9 个账号，不会创建新用户；重复执行会清理旧的演示数据后重新生成，便于多次重置测试环境。
 
 ### 访问地址
 

@@ -40,6 +40,8 @@ staticfiles/
 # 注意：忽略数据库和媒体文件，让每个环境自己生成
 db.sqlite3
 media/
+数据库/dataset_images/
+数据库/dataset_download_manifest.jsonl
 
 # ============================================
 # Node.js / Frontend (依赖文件)
@@ -95,6 +97,7 @@ Desktop.ini
 README/
 文档材料/
 DormFix文档材料/
+数据库/
 
 # 保留根目录的 README.md
 !README.md

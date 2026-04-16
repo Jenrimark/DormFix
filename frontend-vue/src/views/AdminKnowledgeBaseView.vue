@@ -64,6 +64,45 @@
       <div class="lg:col-span-2 space-y-4">
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
           <div class="px-4 py-3 border-b border-gray-200 font-medium text-textDark">知识条目</div>
+          <div class="px-4 py-3 border-b border-gray-100">
+            <div class="flex flex-wrap gap-3 items-center">
+              <input
+                v-model="filters.search"
+                @input="handleFilter"
+                type="text"
+                placeholder="搜索标题..."
+                class="flex-1 min-w-[180px] px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+              <select
+                v-model="filters.category"
+                @change="handleFilter"
+                class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+              >
+                <option value="">全部分类</option>
+                <option value="faq">FAQ</option>
+                <option value="sop">维修SOP</option>
+                <option value="rule">学校规则</option>
+              </select>
+              <select
+                v-model="filters.role_scope"
+                @change="handleFilter"
+                class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+              >
+                <option value="">全部角色</option>
+                <option value="student">仅学生</option>
+                <option value="repairman">仅维修人员</option>
+              </select>
+              <select
+                v-model="filters.is_active"
+                @change="handleFilter"
+                class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary cursor-pointer"
+              >
+                <option value="">全部状态</option>
+                <option value="true">启用</option>
+                <option value="false">停用</option>
+              </select>
+            </div>
+          </div>
           <div v-if="loading" class="text-center py-10 text-gray-500">加载中...</div>
           <div v-else-if="items.length === 0" class="text-center py-10 text-gray-500">暂无条目</div>
           <table v-else class="w-full">
@@ -95,6 +134,25 @@
               </tr>
             </tbody>
           </table>
+          <div v-if="totalPages > 1" class="flex justify-center gap-2 mt-6 pb-6">
+            <button
+              @click="goToPage(currentPage - 1)"
+              :disabled="currentPage === 1"
+              class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            >
+              上一页
+            </button>
+            <span class="px-4 py-2">
+              第 {{ currentPage }} / {{ totalPages }} 页
+            </span>
+            <button
+              @click="goToPage(currentPage + 1)"
+              :disabled="currentPage === totalPages"
+              class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            >
+              下一页
+            </button>
+          </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -131,6 +189,16 @@ const logLoading = ref(false)
 const saving = ref(false)
 const items = ref([])
 const logs = ref([])
+const currentPage = ref(1)
+const totalPages = ref(1)
+const pageSize = 10
+
+const filters = ref({
+  search: '',
+  category: '',
+  role_scope: '',
+  is_active: '',
+})
 
 const form = ref({
   id: null,
@@ -170,14 +238,37 @@ function edit(item) {
 async function loadItems() {
   loading.value = true
   try {
-    const { data } = await getKnowledgeItems({ page_size: 100 })
+    const params = {
+      page: currentPage.value,
+      page_size: pageSize,
+    }
+    if (filters.value.search) params.search = filters.value.search
+    if (filters.value.category) params.category = filters.value.category
+    if (filters.value.role_scope) params.role_scope = filters.value.role_scope
+    if (filters.value.is_active !== '') params.is_active = filters.value.is_active
+
+    const { data } = await getKnowledgeItems(params)
     items.value = data?.results || data || []
+    if (data?.count) totalPages.value = Math.ceil(data.count / pageSize)
+    else totalPages.value = 1
   } catch {
     items.value = []
+    totalPages.value = 1
     notify({ message: '加载知识条目失败', type: 'error' })
   } finally {
     loading.value = false
   }
+}
+
+function handleFilter() {
+  currentPage.value = 1
+  loadItems()
+}
+
+function goToPage(p) {
+  if (p < 1 || p > totalPages.value) return
+  currentPage.value = p
+  loadItems()
 }
 
 async function loadLogs() {

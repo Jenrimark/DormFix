@@ -93,6 +93,26 @@ class KnowledgeItemViewSet(viewsets.ModelViewSet):
             return [IsAuthenticated(), IsAdmin()]
         return super().get_permissions()
 
+    def get_queryset(self):
+        qs = super().get_queryset()
+        params = self.request.query_params
+
+        category = params.get('category')
+        if category:
+            qs = qs.filter(category=category)
+
+        role_scope = params.get('role_scope')
+        if role_scope:
+            qs = qs.filter(role_scope=role_scope)
+
+        is_active = params.get('is_active')
+        if is_active in ['true', '1', 'True', 'TRUE']:
+            qs = qs.filter(is_active=True)
+        elif is_active in ['false', '0', 'False', 'FALSE']:
+            qs = qs.filter(is_active=False)
+
+        return qs
+
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def ask(self, request):
         serializer = AskKnowledgeSerializer(data=request.data)
