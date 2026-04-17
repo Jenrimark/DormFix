@@ -70,15 +70,15 @@
         <!-- Stats -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-8 max-w-4xl mx-auto mb-16 animate-fade-in-up animation-delay-600">
           <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300">
-            <div class="text-4xl font-black gradient-text-large mb-2">2.3h</div>
+            <div class="text-4xl font-black gradient-text-large hero-stat-value mb-1">{{ heroStats.avgResponse }}</div>
             <div class="text-gray-600 font-medium">平均响应时间</div>
           </div>
           <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300">
-            <div class="text-4xl font-black gradient-text-large mb-2">4.5h</div>
+            <div class="text-4xl font-black gradient-text-large hero-stat-value mb-1">{{ heroStats.avgRepair }}</div>
             <div class="text-gray-600 font-medium">平均报修时长</div>
           </div>
           <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transform hover:-translate-y-2 transition-all duration-300">
-            <div class="text-4xl font-black gradient-text-large mb-2">98%</div>
+            <div class="text-4xl font-black gradient-text-large hero-stat-value mb-1">{{ heroStats.satisfaction }}</div>
             <div class="text-gray-600 font-medium">学生满意度</div>
           </div>
         </div>
@@ -337,9 +337,14 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { getLatestAnnouncements } from '@/api'
+import { getLatestAnnouncements, getPublicStats } from '@/api'
 
 const announcements = ref([])
+const heroStats = ref({
+  avgResponse: '--',
+  avgRepair: '--',
+  satisfaction: '--',
+})
 
 const scrollToSection = (sectionId) => {
   const element = document.getElementById(sectionId);
@@ -385,6 +390,33 @@ const fetchAnnouncements = async () => {
   }
 }
 
+const formatHourValue = (value) => {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return '--'
+  return `${Number(value).toFixed(1)}h`
+}
+
+const formatPercentValue = (value) => {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return '--'
+  return `${Math.max(0, Math.min(100, Number(value))).toFixed(0)}%`
+}
+
+const fetchHeroStats = async () => {
+  try {
+    const { data } = await getPublicStats()
+    const avgResponse = Number(data?.avg_response_time)
+    const avgRepair = Number(data?.avg_repair_duration_hours)
+    const satisfaction = Number(data?.satisfaction_rate)
+
+    heroStats.value = {
+      avgResponse: formatHourValue(avgResponse),
+      avgRepair: formatHourValue(avgRepair),
+      satisfaction: formatPercentValue(satisfaction),
+    }
+  } catch (error) {
+    console.error('获取首页统计失败:', error)
+  }
+}
+
 // 格式化时间
 const formatTime = (dateString) => {
   const date = new Date(dateString)
@@ -401,6 +433,7 @@ const formatTime = (dateString) => {
 
 onMounted(() => {
   fetchAnnouncements()
+  fetchHeroStats()
 })
 </script>
 
@@ -419,9 +452,13 @@ onMounted(() => {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   display: inline-block;
-  height: 97px;
   background-size: 200% 200%;
   animation: gradient-shift 3s ease infinite;
+}
+
+.hero-stat-value {
+  line-height: 1;
+  display: block;
 }
 
 @keyframes gradient-shift {

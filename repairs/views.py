@@ -1,8 +1,8 @@
 from rest_framework import status, viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from django.db.models import Q, Count, Avg
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from django.db.models import Q, Count, Avg, Max
 from django.utils import timezone
 from django.http import HttpResponse, Http404
 from datetime import timedelta
@@ -601,6 +601,52 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
         
         serializer = WorkOrderStatisticsSerializer(stats)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny], url_path='public-stats')
+    def public_stats(self, request):
+        """
+        公开统计（游客可访问，口径与管理员全量数据一致）。
+        给首页大屏/落地页使用，避免游客访问受权限限制。
+        """
+        queryset = WorkOrder.objects.all()
+
+        # 1) 平均响应时间（提交 -> 接单，小时）
+        accepted_orders = queryset.filter(accept_time__isnull=False)
+        avg_response_time = 0.0
+        if accepted_orders.exists():
+            total_hours = 0.0
+            count = 0
+            for order in accepted_orders:
+                delta = order.accept_time - order.create_time
+                hours = delta.total_seconds() / 3600
+                if hours >= 0:
+                    total_hours += hours
+                    count += 1
+            avg_response_time = round(total_hours / count, 1) if count > 0 else 0.0
+
+        # 2) 平均报修时长（开始维修 -> 完工，小时）
+        completed_orders = queryset.filter(status=3, start_time__isnull=False, finish_time__isnull=False)
+        avg_repair_duration_hours = 0.0
+        if completed_orders.exists():
+            total_hours = 0.0
+            count = 0
+            for order in completed_orders:
+                delta = order.finish_time - order.start_time
+                hours = delta.total_seconds() / 3600
+                if hours >= 0:
+                    total_hours += hours
+                    count += 1
+            avg_repair_duration_hours = round(total_hours / count, 1) if count > 0 else 0.0
+
+        # 3) 学生满意度（评价平均分/5*100）
+        avg_score = Comment.objects.filter(work_order__status=3).aggregate(score=Avg('score')).get('score')
+        satisfaction_rate = round((float(avg_score) / 5) * 100, 1) if avg_score else 0.0
+
+        return Response({
+            'avg_response_time': avg_response_time,
+            'avg_repair_duration_hours': avg_repair_duration_hours,
+            'satisfaction_rate': satisfaction_rate,
+        })
     
     @action(detail=False, methods=['get'])
     def type_distribution(self, request):
@@ -621,40 +667,117 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def trend_data(self, request):
-        """工单趋势数据（管理员）- 最近7天"""
+        """工单趋势数据（管理员）- 支持近一周/一月/一年"""
         if not request.user.is_admin():
             return Response(
                 {'error': '权限不足'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
-        from datetime import datetime, timedelta
-        
-        # 获取最近7天的日期
-        today = timezone.now().date()
-        dates = [(today - timedelta(days=i)) for i in range(6, -1, -1)]
-        
-        trend_data = []
-        for date in dates:
-            next_date = date + timedelta(days=1)
-            
-            # 当天提交的工单数
-            submitted = WorkOrder.objects.filter(
-                create_time__date=date
-            ).count()
-            
-            # 当天完成的工单数
-            completed = WorkOrder.objects.filter(
-                finish_time__date=date,
-                status=3
-            ).count()
-            
-            trend_data.append({
-                'date': date.strftime('%m/%d'),
-                'submitted': submitted,
-                'completed': completed
-            })
-        
+
+        from datetime import datetime, time, timedelta
+
+        range_key = (request.query_params.get('range') or 'week').strip().lower()
+        range_to_days = {
+            'week': 7,
+            'month': 30,
+            'year': 365,
+        }
+        days = range_to_days.get(range_key, 7)
+
+        # 以“最新业务日期”为窗口结束日，避免历史数据项目在“含今天”窗口里全部为 0。
+        latest_create = WorkOrder.objects.aggregate(latest=Max('create_time'))['latest']
+        latest_finish = WorkOrder.objects.exclude(finish_time__isnull=True).aggregate(latest=Max('finish_time'))['latest']
+        latest_dt_candidates = [dt for dt in [latest_create, latest_finish] if dt is not None]
+        end_date = max(latest_dt_candidates).date() if latest_dt_candidates else timezone.now().date()
+        dates = [(end_date - timedelta(days=i)) for i in range(days - 1, -1, -1)]
+
+        def build_trend(items):
+            data = []
+            tz = timezone.get_current_timezone()
+            for date in items:
+                # 防御：MySQL 历史脏数据（如零日期）可能在分组结果中表现为 None，直接跳过避免 500。
+                if date is None:
+                    continue
+
+                day_start = timezone.make_aware(datetime.combine(date, time.min), tz)
+                day_end = day_start + timedelta(days=1)
+                # 当天提交的工单数
+                submitted = WorkOrder.objects.filter(
+                    create_time__gte=day_start,
+                    create_time__lt=day_end,
+                ).count()
+
+                # 当天完成的工单数
+                # 兼容历史脏数据：若 status=3 但 finish_time 为空，按 create_time 兜底统计到趋势中
+                completed = WorkOrder.objects.filter(
+                    Q(status=3, finish_time__gte=day_start, finish_time__lt=day_end) |
+                    Q(status=3, finish_time__isnull=True, create_time__gte=day_start, create_time__lt=day_end)
+                ).count()
+
+                data.append({
+                    'date': date.isoformat(),
+                    'submitted': submitted,
+                    'completed': completed
+                })
+            return data
+
+        def month_start(date):
+            return date.replace(day=1)
+
+        def shift_months(date, months):
+            total_month = (date.year * 12 + (date.month - 1)) + months
+            year = total_month // 12
+            month = total_month % 12 + 1
+            return date.replace(year=year, month=month, day=1)
+
+        def build_month_trend(month_items):
+            data = []
+            tz = timezone.get_current_timezone()
+            for month_date in month_items:
+                if month_date is None:
+                    continue
+
+                month_begin = timezone.make_aware(datetime.combine(month_date, time.min), tz)
+                next_month = shift_months(month_date, 1)
+                month_end = timezone.make_aware(datetime.combine(next_month, time.min), tz)
+
+                submitted = WorkOrder.objects.filter(
+                    create_time__gte=month_begin,
+                    create_time__lt=month_end,
+                ).count()
+
+                completed = WorkOrder.objects.filter(
+                    Q(status=3, finish_time__gte=month_begin, finish_time__lt=month_end) |
+                    Q(status=3, finish_time__isnull=True, create_time__gte=month_begin, create_time__lt=month_end)
+                ).count()
+
+                data.append({
+                    'date': month_date.isoformat(),
+                    'submitted': submitted,
+                    'completed': completed
+                })
+            return data
+
+        if range_key == 'year':
+            end_month = month_start(end_date)
+            months = [shift_months(end_month, i) for i in range(-11, 1)]
+            trend_data = build_month_trend(months)
+        else:
+            trend_data = build_trend(dates)
+
+        # 若当前时间窗口全为 0，但系统存在历史数据，则回退到“最近有业务发生的 N 天”。
+        # 这样演示/历史数据场景下不会出现整张图全零误导用户。
+        has_nonzero = any((row['submitted'] > 0 or row['completed'] > 0) for row in trend_data)
+        if not has_nonzero and WorkOrder.objects.exists() and range_key != 'year':
+            create_days = set(WorkOrder.objects.dates('create_time', 'day'))
+            finish_days = set(
+                WorkOrder.objects.filter(status=3, finish_time__isnull=False).dates('finish_time', 'day')
+            )
+            active_days = sorted(day for day in (create_days | finish_days) if day is not None)
+            if active_days:
+                dates = active_days[-days:]
+                trend_data = build_trend(dates)
+
         return Response(trend_data)
     
     @action(detail=False, methods=['get'])
@@ -687,6 +810,7 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
             if total_orders == 0:
                 performance_data.append({
                     'name': repairman.username,
+                    'real_name': repairman.real_name or '',
                     'response_speed': 50.0,
                     'quality': 50.0,
                     'quantity': 50.0,
@@ -743,6 +867,7 @@ class WorkOrderViewSet(viewsets.ModelViewSet):
             
             performance_data.append({
                 'name': repairman.username,
+                'real_name': repairman.real_name or '',
                 'response_speed': round(response_speed, 1),
                 'quality': round(quality, 1),
                 'quantity': round(quantity, 1),
