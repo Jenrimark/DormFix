@@ -10,8 +10,9 @@
 [![Vue.js](https://img.shields.io/badge/Vue.js-3.4-4FC08D?logo=vue.js&logoColor=white)](https://vuejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-5.0-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-06B6D4?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/Jenrimark/DormFix?style=social)](https://github.com/Jenrimark/DormFix/stargazers)
+[![DeepWiki](https://img.shields.io/badge/DeepWiki-DormFix-blue?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yIDNINmE0IDQgMCAwMTQgNHYxNGEzIDMgMCAwMC0zLTNIMnoiLz48cGF0aCBkPSJNMjIgM0gxOGE0IDQgMCAwMC00IDR2MTRhMyAzIDAgMDEzLTNoMXoiLz48L3N2Zz4=)](https://deepwiki.com/Jenrimark/DormFix)
 
 <br/>
 
@@ -501,7 +502,7 @@ npm install && npm run dev
 
 ## 许可证
 
-本项目基于 [MIT License](LICENSE) 开源。
+本项目基于 [Apache License 2.0](LICENSE) 开源。
 
 ---
 
